@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  **************************************************************************/
 
-#include "gsvm.h"
+#include "configuration.h"
 #include "launcher.h"
 
 ostream& operator<< (ostream& os, variables_map& vars) {
@@ -62,11 +62,14 @@ int main(int argc, char *argv[]) {
 	          options(desc).positional(opt).run(), vars);
 	notify(vars);
 
-	if (!vars.count(PR_KEY_HELP) && vars.count(PR_KEY_INPUT)) {
+	if (!vars.count(PR_KEY_HELP)) {
 		logger << vars;
 
 		try {
-			ApplicationLauncher launcher(vars);
+			ParametersParser parser(vars);
+			Configuration conf = parser.getConfiguration();
+
+			ApplicationLauncher launcher(conf);
 			launcher.launch();
 		} catch (InvalidConfigurationException &e) {
 			cerr << e.getMessage() << endl;

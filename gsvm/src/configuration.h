@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  **************************************************************************/
 
-#ifndef USVM_H_
-#define USVM_H_
+#ifndef CONFIGURATION_H_
+#define CONFIGURATION_H_
 
 #include <iostream>
 
@@ -33,6 +33,7 @@
 
 using namespace std;
 using namespace boost::program_options;
+
 
 #define PR_HELP "help,h"
 #define PR_C_LOW "c-low,c"
@@ -86,5 +87,61 @@ using namespace boost::program_options;
 #define ID_RANDOMIZER_PLAIN "simple"
 #define ID_RANDOMIZER_FAIR "fair"
 #define ID_RANDOMIZER_DETERM "determ"
+
+
+class InvalidConfigurationException {
+
+	string message;
+
+public:
+	InvalidConfigurationException(string message);
+
+	string getMessage();
+
+};
+
+
+enum MatrixType {
+	SPARSE,
+	DENSE
+};
+
+enum ModelSelectionType {
+	GRID,
+	PATTERN
+};
+
+struct Configuration {
+
+	string dataFile;
+
+	SearchRange searchRange;
+	TrainParams trainingParams;
+
+	struct CrossValidationParams {
+		quantity innerFolds;
+		quantity outerFolds;
+		ModelSelectionType modelSelection;
+	} validation;
+
+	MatrixType matrixType;
+	ViolationCriterion optimizationProcedure;
+	StopCriterion stopCriterion;
+
+	GeneratorType randomization;
+
+};
+
+
+class ParametersParser {
+
+	variables_map& vars;
+
+public:
+	ParametersParser(variables_map& vars);
+
+	Configuration getConfiguration();
+};
+
 
 #endif
