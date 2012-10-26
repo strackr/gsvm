@@ -1,6 +1,7 @@
 bin_PROGRAMS = gsvm
 gsvm_SOURCES = \
 		src/gsvm.cc \
+		src/launcher.cc \
 		src/math/numeric.cc \
 		src/math/matrix.cc \
 		src/math/dense.cc \
