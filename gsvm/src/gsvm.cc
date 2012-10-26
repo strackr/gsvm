@@ -16,8 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  **************************************************************************/
 
-#include "configuration.h"
-#include "launcher.h"
+#include "gsvm.h"
 
 ostream& operator<< (ostream& os, variables_map& vars) {
 	map<string, variable_value>::iterator it;
@@ -63,11 +62,11 @@ int main(int argc, char *argv[]) {
 	notify(vars);
 
 	if (!vars.count(PR_KEY_HELP)) {
-		logger << vars;
-
 		try {
 			ParametersParser parser(vars);
 			Configuration conf = parser.getConfiguration();
+
+			logger << vars;
 
 			ApplicationLauncher launcher(conf);
 			launcher.launch();
