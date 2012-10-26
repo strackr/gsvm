@@ -34,7 +34,10 @@ ostream& operator<< (ostream& os, variables_map& vars) {
 }
 
 int main(int argc, char *argv[]) {
-	options_description desc("Allowed options");
+	string usage = (format("Usage: %s [OPTION]... [FILE]\n") % PACKAGE).str();
+	string descr = "Perform SVM training for the given data set [FILE].\n";
+	string options = "Available options";
+	options_description desc(usage + descr + options);
 	desc.add_options()
 		(PR_HELP, "produce help message")
 		(PR_C_LOW, value<double>()->default_value(0.0625), "C value (lower bound)")
