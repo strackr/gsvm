@@ -67,9 +67,7 @@ CrossSolver<GaussKernel, Matrix, Strategy>* ApplicationLauncher::createSolver() 
 			conf.validation.innerFolds,
 			conf.validation.outerFolds);
 
-	Timer timer;
-
-	timer.start();
+	Timer timer(true);
 	CrossSolver<GaussKernel, Matrix, Strategy> *solver
 			= (CrossSolver<GaussKernel, Matrix, Strategy>*) reader.getSolver();
 	timer.stop();
@@ -83,8 +81,7 @@ template<typename Matrix, typename Strategy>
 void ApplicationLauncher::performNestedCrossValidation() {
 	CrossSolver<GaussKernel, Matrix, Strategy> *solver = createSolver<Matrix, Strategy>();
 
-	Timer timer;
-	timer.start();
+	Timer timer(true);
 	GridGaussianModelSelector<Matrix, Strategy> *selector;
 	if (conf.validation.modelSelection == GRID) {
 		selector = new GridGaussianModelSelector<Matrix, Strategy>();
@@ -106,8 +103,7 @@ template<typename Matrix, typename Strategy>
 void ApplicationLauncher::performCrossValidation() {
 	CrossSolver<GaussKernel, Matrix, Strategy> *solver = createSolver<Matrix, Strategy>();
 
-	Timer timer;
-	timer.start();
+	Timer timer(true);
 	GaussKernel param(conf.searchRange.gammaLow);
 	solver->setKernelParams(conf.searchRange.cLow, param);
 	TestingResult result = solver->doCrossValidation();
@@ -123,8 +119,7 @@ template<typename Matrix, typename Strategy>
 void ApplicationLauncher::performTraining() {
 	CrossSolver<GaussKernel, Matrix, Strategy> *solver = createSolver<Matrix, Strategy>();
 
-	Timer timer;
-	timer.start();
+	Timer timer(true);
 	GaussKernel param(conf.searchRange.gammaLow);
 	solver->setKernelParams(conf.searchRange.cLow, param);
 	CrossClassifier<GaussKernel, Matrix, Strategy>* classifier = solver->getClassifier();
@@ -173,7 +168,8 @@ void ApplicationLauncher::selectGeneratorTypeAndRun() {
 	case DETERMINISTIC:
 		run<Matrix, Violation, DETERMINISTIC>();
 		break;
-	default: throw InvalidConfigurationException("unknown randomization type");
+	default:
+		throw InvalidConfigurationException("unknown randomization type");
 	}
 }
 

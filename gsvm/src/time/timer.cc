@@ -18,8 +18,11 @@
 
 #include "timer.h"
 
-Timer::Timer() :
+Timer::Timer(bool autostart) :
 		total(0), started(0), finished(0) {
+	if (autostart) {
+		start();
+	}
 }
 
 void Timer::start() {

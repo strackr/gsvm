@@ -30,7 +30,7 @@ class Timer {
 
 public:
 
-	Timer();
+	Timer(bool autostart = false);
 
 	void start();
 	void stop();
