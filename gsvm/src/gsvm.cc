@@ -19,6 +19,20 @@
 #include "gsvm.h"
 #include "launcher.h"
 
+ostream& operator<< (ostream& os, variables_map& vars) {
+	map<string, variable_value>::iterator it;
+	for (it = vars.begin(); it != vars.end(); it++) {
+		if (typeid(string) == it->second.value().type()) {
+			os << format("%-20s%s\n") % it->first % it->second.as<string>();
+		} else if (typeid(double) == it->second.value().type()) {
+			os << format("%-20s%g\n") % it->first % it->second.as<double>();
+		} else if (typeid(int) == it->second.value().type()) {
+			os << format("%-20s%d\n") % it->first % it->second.as<int>();
+		}
+	}
+	os << endl;
+	return os;
+}
 
 int main(int argc, char *argv[]) {
 	options_description desc("Allowed options");
@@ -49,17 +63,7 @@ int main(int argc, char *argv[]) {
 	notify(vars);
 
 	if (!vars.count(PR_KEY_HELP) && vars.count(PR_KEY_INPUT)) {
-		map<string, variable_value>::iterator it;
-		for (it = vars.begin(); it != vars.end(); it++) {
-			if (typeid(string) == it->second.value().type()) {
-				logger << format("%-20s%s\n") % it->first % it->second.as<string>();
-			} else if (typeid(double) == it->second.value().type()) {
-				logger << format("%-20s%g\n") % it->first % it->second.as<double>();
-			} else if (typeid(int) == it->second.value().type()) {
-				logger << format("%-20s%d\n") % it->first % it->second.as<int>();
-			}
-		}
-		logger << endl;
+		logger << vars;
 
 		try {
 			ApplicationLauncher launcher(vars);

@@ -18,6 +18,15 @@
 
 #include "launcher.h"
 
+
+InvalidConfigurationException::InvalidConfigurationException(string message) : message(message) {
+}
+
+string InvalidConfigurationException::getMessage() {
+	return message;
+}
+
+
 void ApplicationLauncher::selectMatrixTypeAndRun(variables_map &vars, SearchRange& range, quantity outer, quantity inner,
 		TrainParams& params, StopCriterion& stop, ifstream& input) {
 	string matrix = vars[PR_KEY_MATRIX_TYPE].as<string>();

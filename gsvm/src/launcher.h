@@ -21,6 +21,19 @@
 
 #include "gsvm.h"
 
+
+class InvalidConfigurationException {
+
+	string message;
+
+public:
+	InvalidConfigurationException(string message);
+
+	string getMessage();
+
+};
+
+
 class ApplicationLauncher {
 
 	variables_map &vars;
@@ -32,7 +45,6 @@ protected:
 	template<typename Matrix>
 	void selectViolationCriterionAndRun(variables_map &vars, SearchRange& range, quantity outer, quantity inner,
 			TrainParams& params, StopCriterion& stop, ifstream& input);
-
 	template<typename Matrix, ViolationCriterion Violation>
 	void selectGeneratorTypeAndRun(variables_map &vars, SearchRange& range, quantity outer, quantity inner,
 			TrainParams& params, StopCriterion& stop, ifstream& input);

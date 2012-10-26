@@ -87,19 +87,4 @@ using namespace boost::program_options;
 #define ID_RANDOMIZER_FAIR "fair"
 #define ID_RANDOMIZER_DETERM "determ"
 
-
-class InvalidConfigurationException {
-
-	string message;
-
-public:
-	InvalidConfigurationException(string message) : message(message) {
-	}
-
-	string getMessage() {
-		return message;
-	}
-
-};
-
 #endif
