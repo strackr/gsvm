@@ -26,7 +26,6 @@ class ApplicationLauncher {
 
 	Configuration &conf;
 
-protected:
 	void selectMatrixTypeAndRun();
 
 	template<typename Matrix>
@@ -38,10 +37,9 @@ protected:
 	template<typename Matrix, ViolationCriterion Violation, GeneratorType Generator>
 	void run();
 
-
+protected:
 	template<typename Matrix, typename Strategy>
 	CrossSolver<GaussKernel, Matrix, Strategy>* createSolver();
-
 
 	template<typename Matrix, typename Strategy>
 	void performTraining();
@@ -183,13 +181,13 @@ template<typename Matrix>
 void ApplicationLauncher::selectViolationCriterionAndRun() {
 	switch (conf.optimizationProcedure) {
 	case MDM:
-		selectGeneratorTypeAndRun<sfmatrix, MDM>();
+		selectGeneratorTypeAndRun<Matrix, MDM>();
 		break;
 	case IMDM:
-		selectGeneratorTypeAndRun<sfmatrix, IMDM>();
+		selectGeneratorTypeAndRun<Matrix, IMDM>();
 		break;
 	case GMDM:
-		selectGeneratorTypeAndRun<sfmatrix, GMDM>();
+		selectGeneratorTypeAndRun<Matrix, GMDM>();
 		break;
 	default:
 		throw InvalidConfigurationException("unknown optimization criterion");
