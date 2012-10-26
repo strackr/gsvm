@@ -18,10 +18,9 @@
 
 #include "gsvm.h"
 
-
 template<typename Matrix, typename Strategy>
-void performNestedCrossValidation(ifstream& input, TrainParams params,
-		SearchRange range, StopCriterion crit, quantity innerFolds, quantity outerFolds, bool useGrid) {
+CrossSolver<GaussKernel, Matrix, Strategy>* createSolver(ifstream& input,
+		TrainParams &params, StopCriterion &crit, quantity innerFolds, quantity outerFolds) {
 	DefaultSolverBuilder<Matrix, Strategy> reader(input, params, crit, innerFolds, outerFolds, false);
 
 	Timer timer;
@@ -32,7 +31,17 @@ void performNestedCrossValidation(ifstream& input, TrainParams params,
 
 	logger << format("input reading time: %.2f[s]\n") % timer.getTimeElapsed();
 
-	timer.restart();
+	return solver;
+}
+
+template<typename Matrix, typename Strategy>
+void performNestedCrossValidation(ifstream& input, TrainParams& params,
+		SearchRange& range, StopCriterion& crit, quantity innerFolds, quantity outerFolds, bool useGrid) {
+	CrossSolver<GaussKernel, Matrix, Strategy> *solver = createSolver<Matrix, Strategy>(
+			input, params, crit, innerFolds, outerFolds);
+
+	Timer timer;
+	timer.start();
 	GridGaussianModelSelector<Matrix, Strategy> *selector;
 	if (useGrid) {
 		selector = new GridGaussianModelSelector<Matrix, Strategy>();
@@ -51,19 +60,13 @@ void performNestedCrossValidation(ifstream& input, TrainParams params,
 }
 
 template<typename Matrix, typename Strategy>
-void performCrossValidation(ifstream& input, TrainParams params,
-		SearchRange range, StopCriterion crit, quantity innerFolds) {
-	DefaultSolverBuilder<Matrix, Strategy> reader(input, params, crit, innerFolds);
+void performCrossValidation(ifstream& input, TrainParams &params,
+		SearchRange& range, StopCriterion& crit, quantity innerFolds) {
+	CrossSolver<GaussKernel, Matrix, Strategy> *solver = createSolver<Matrix, Strategy>(
+				input, params, crit, innerFolds, 1);
 
 	Timer timer;
-
 	timer.start();
-	CrossSolver<GaussKernel, Matrix, Strategy> *solver = (CrossSolver<GaussKernel, Matrix, Strategy>*) reader.getSolver();
-	timer.stop();
-
-	logger << format("input reading time: %.2f[s]\n") % timer.getTimeElapsed();
-
-	timer.restart();
 	GaussKernel param(range.gammaLow);
 	solver->setKernelParams(range.cLow, param);
 	TestingResult result = solver->doCrossValidation();
@@ -76,19 +79,13 @@ void performCrossValidation(ifstream& input, TrainParams params,
 }
 
 template<typename Matrix, typename Strategy>
-void performTraining(ifstream& input, TrainParams params,
-		SearchRange range, StopCriterion crit) {
-	DefaultSolverBuilder<Matrix, Strategy> reader(input, params, crit);
+void performTraining(ifstream& input, TrainParams& params,
+		SearchRange& range, StopCriterion& crit) {
+	CrossSolver<GaussKernel, Matrix, Strategy> *solver = createSolver<Matrix, Strategy>(
+				input, params, crit, 1, 1);
 
 	Timer timer;
-
 	timer.start();
-	CrossSolver<GaussKernel, Matrix, Strategy> *solver = (CrossSolver<GaussKernel, Matrix, Strategy>*) reader.getSolver();
-	timer.stop();
-
-	logger << format("input reading time: %.2f[s]\n") % timer.getTimeElapsed();
-
-	timer.restart();
 	GaussKernel param(range.gammaLow);
 	solver->setKernelParams(range.cLow, param);
 	CrossClassifier<GaussKernel, Matrix, Strategy>* classifier = solver->getClassifier();
@@ -114,7 +111,7 @@ void performTraining(ifstream& input, TrainParams params,
 
 template<typename Matrix, ViolationCriterion Violation, GeneratorType Generator>
 void run(variables_map &vars, SearchRange& range, quantity outerFolds, quantity innerFolds,
-		TrainParams& params, StopCriterion stop, ifstream& input) {
+		TrainParams& params, StopCriterion& stop, ifstream& input) {
 	if (outerFolds > 1) {
 		bool useGrid = SEL_TYPE_GRID == vars[PR_KEY_SEL_TYPE].as<string>();
 		performNestedCrossValidation<Matrix, SolverStrategy<Violation, Generator> >(
@@ -132,7 +129,7 @@ void run(variables_map &vars, SearchRange& range, quantity outerFolds, quantity 
 
 template<typename Matrix, ViolationCriterion Violation>
 void selectGeneratorTypeAndRun(variables_map &vars, SearchRange& range, quantity outer, quantity inner,
-		TrainParams& params, StopCriterion stop, ifstream& input) {
+		TrainParams& params, StopCriterion& stop, ifstream& input) {
 	string random = vars[PR_KEY_ID_RANDOMIZER].as<string>();
 	if (ID_RANDOMIZER_PLAIN == random) {
 		run<Matrix, Violation, PLAIN>(vars, range, outer, inner, params, stop, input);
@@ -147,7 +144,7 @@ void selectGeneratorTypeAndRun(variables_map &vars, SearchRange& range, quantity
 
 template<typename Matrix>
 void selectViolationCriterionAndRun(variables_map &vars, SearchRange& range, quantity outer, quantity inner,
-		TrainParams& params, StopCriterion stop, ifstream& input) {
+		TrainParams& params, StopCriterion& stop, ifstream& input) {
 	string optimization = vars[PR_KEY_OPTIMIZATION].as<string>();
 	if (OPTIMIZATION_MDM == optimization) {
 		selectGeneratorTypeAndRun<sfmatrix, MDM>(vars, range, outer, inner, params, stop, input);
@@ -161,7 +158,7 @@ void selectViolationCriterionAndRun(variables_map &vars, SearchRange& range, qua
 }
 
 void selectMatrixTypeAndRun(variables_map &vars, SearchRange& range, quantity outer, quantity inner,
-		TrainParams& params, StopCriterion stop, ifstream& input) {
+		TrainParams& params, StopCriterion& stop, ifstream& input) {
 	string matrix = vars[PR_KEY_MATRIX_TYPE].as<string>();
 	if (MAT_TYPE_SPARSE == matrix) {
 		selectViolationCriterionAndRun<sfmatrix>(vars, range, outer, inner, params, stop, input);
