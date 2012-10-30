@@ -25,6 +25,7 @@
 
 #define EXPECTED_SV_NUMBER 15000
 
+
 class StopCriterionStrategy {
 
 public:
@@ -36,15 +37,26 @@ public:
 };
 
 
-class DefaultStopStrategy: public StopCriterionStrategy {
+class MnStopStrategy: public StopCriterionStrategy {
 
 public:
 	virtual fvalue getThreshold(fvalue w2, fvalue tau, fvalue eps);
 	virtual fvalue getEpsilon(fvalue tau, fvalue c);
 
-	virtual ~DefaultStopStrategy();
+	virtual ~MnStopStrategy();
 
 };
+
+
+class AdjustedMnStopStrategy: public MnStopStrategy {
+
+public:
+	virtual fvalue getThreshold(fvalue w2, fvalue tau, fvalue eps);
+
+	virtual ~AdjustedMnStopStrategy();
+
+};
+
 
 class MebStopStrategy: public StopCriterionStrategy {
 

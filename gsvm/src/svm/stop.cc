@@ -22,15 +22,23 @@ StopCriterionStrategy::~StopCriterionStrategy() {
 }
 
 
-fvalue DefaultStopStrategy::getThreshold(fvalue w2, fvalue tau, fvalue eps) {
+fvalue MnStopStrategy::getThreshold(fvalue w2, fvalue tau, fvalue eps) {
 	return w2 * pow2(1.0 - eps);
 }
 
-fvalue DefaultStopStrategy::getEpsilon(fvalue tau, fvalue c) {
+fvalue MnStopStrategy::getEpsilon(fvalue tau, fvalue c) {
 	return DEFAULT_EPSILON;
 }
 
-DefaultStopStrategy::~DefaultStopStrategy() {
+MnStopStrategy::~MnStopStrategy() {
+}
+
+
+fvalue AdjustedMnStopStrategy::getThreshold(fvalue w2, fvalue tau, fvalue eps) {
+	return w2 - eps * sqrt(w2 * tau);
+}
+
+AdjustedMnStopStrategy::~AdjustedMnStopStrategy() {
 }
 
 
