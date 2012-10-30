@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
 		(PR_DRAW_NUM, value<int>()->default_value(600), "draw number")
 		(PR_SEL_TYPE, value<string>()->default_value(SEL_TYPE_PATTERN), "model selection type (grid or pattern)")
 		(PR_MATRIX_TYPE, value<string>()->default_value(MAT_TYPE_SPARSE), "data representation (sparse or dense)")
-		(PR_STOP_CRIT, value<string>()->default_value(STOP_CRIT_DEFAULT), "stopping criterion (meb or default)")
+		(PR_STOP_CRIT, value<string>()->default_value(STOP_CRIT_ADJMN), "stopping criterion (adjmn, mn or meb)")
 		(PR_OPTIMIZATION, value<string>()->default_value(OPTIMIZATION_MDM), "optimization strategy (mdm or imdm)")
 		(PR_ID_RANDOMIZER, value<string>()->default_value(ID_RANDOMIZER_FAIR), "id generator (simple, fair, determ)")
 		(PR_INPUT, value<string>(), "input file");

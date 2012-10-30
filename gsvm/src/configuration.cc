@@ -65,8 +65,10 @@ Configuration ParametersParser::getConfiguration() {
 
 	string stopStr = vars[PR_KEY_STOP_CRIT].as<string>();
 	StopCriterion stop;
-	if (STOP_CRIT_DEFAULT == stopStr) {
-		stop = DEFAULT;
+	if (STOP_CRIT_ADJMN == stopStr) {
+		stop = ADJMNORM;
+	} else if (STOP_CRIT_MN == stopStr) {
+		stop = MNORM;
 	} else if (STOP_CRIT_MEB == stopStr) {
 		stop = MEB;
 	} else {

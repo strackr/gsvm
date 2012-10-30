@@ -77,7 +77,8 @@ using namespace boost::program_options;
 
 #define EPSILON_DEFAULT "default"
 
-#define STOP_CRIT_DEFAULT "default"
+#define STOP_CRIT_ADJMN "adjmn"
+#define STOP_CRIT_MN "mn"
 #define STOP_CRIT_MEB "meb"
 
 #define OPTIMIZATION_MDM "mdm"

@@ -39,7 +39,8 @@ using namespace std;
 
 
 enum StopCriterion {
-	DEFAULT,
+	ADJMNORM,
+	MNORM,
 	MEB
 };
 
@@ -106,7 +107,7 @@ public:
 
 template<typename Matrix, typename Strategy>
 DefaultSolverBuilder<Matrix, Strategy>::DefaultSolverBuilder(istream &input, TrainParams &params,
-		StopCriterion strategy = DEFAULT, quantity innerFolds = 1, quantity outerFolds = 1,
+		StopCriterion strategy = ADJMNORM, quantity innerFolds = 1, quantity outerFolds = 1,
 		bool reduceDim = false) :
 		input(&input),
 		params(params),
@@ -238,13 +239,15 @@ label_id* DefaultSolverBuilder<Matrix, Strategy>::getLabelVector(list<label_id> 
 
 template<typename Matrix, typename Strategy>
 StopCriterionStrategy* DefaultSolverBuilder<Matrix, Strategy>::getStopCriterion() {
-	StopCriterionStrategy *stop;
-	if (strategy == MEB) {
-		stop = new MebStopStrategy();
-	} else {
-		stop = new DefaultStopStrategy();
+	switch (strategy) {
+	case MEB:
+		return new MebStopStrategy();
+	case MNORM:
+		return new MnStopStrategy();
+	case ADJMNORM:
+	default:
+		return new AdjustedMnStopStrategy();
 	}
-	return stop;
 }
 
 template<typename Matrix, typename Strategy>
