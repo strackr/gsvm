@@ -121,6 +121,7 @@ typedef float fvalue;
 #define fvalue_min gsl_stats_float_min
 
 #define exp expf
+#define sqrt sqrtf
 
 #else
 // numeric types for double precision computations
@@ -184,6 +185,7 @@ typedef double fvalue;
 #define fvalue_min gsl_stats_min
 
 #define exp exp
+#define sqrt sqrt
 
 #endif
 
