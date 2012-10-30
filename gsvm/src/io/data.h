@@ -32,7 +32,7 @@
 
 #include "../logging/log.h"
 #include "../svm/solver.h"
-#include "../svm/cv.h"
+#include "../svm/validation.h"
 #include "../feature/feature.h"
 
 using namespace std;
@@ -163,7 +163,7 @@ Solver<GaussKernel, Matrix, Strategy>* DefaultSolverBuilder<Matrix, Strategy>::g
 
 	StopCriterionStrategy *strategy = getStopCriterion();
 
-	return new CrossSolver<GaussKernel, Matrix, Strategy>(
+	return new CrossValidationSolver<GaussKernel, Matrix, Strategy>(
 			labels, x, y, params, strategy, innerFolds, outerFolds);
 //	return new Solver<GaussKernel>(labels, x, y, params);
 }

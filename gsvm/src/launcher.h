@@ -39,7 +39,7 @@ class ApplicationLauncher {
 
 protected:
 	template<typename Matrix, typename Strategy>
-	CrossSolver<GaussKernel, Matrix, Strategy>* createSolver();
+	CrossValidationSolver<GaussKernel, Matrix, Strategy>* createSolver();
 
 	template<typename Matrix, typename Strategy>
 	GridGaussianModelSelector<Matrix, Strategy>* createModelSelector();
@@ -65,7 +65,7 @@ public:
 };
 
 template<typename Matrix, typename Strategy>
-CrossSolver<GaussKernel, Matrix, Strategy>* ApplicationLauncher::createSolver() {
+CrossValidationSolver<GaussKernel, Matrix, Strategy>* ApplicationLauncher::createSolver() {
 	ifstream input(conf.dataFile.c_str());
 	DefaultSolverBuilder<Matrix, Strategy> reader(input,
 			conf.trainingParams,
@@ -74,8 +74,8 @@ CrossSolver<GaussKernel, Matrix, Strategy>* ApplicationLauncher::createSolver() 
 			conf.validation.outerFolds);
 
 	Timer timer(true);
-	CrossSolver<GaussKernel, Matrix, Strategy> *solver
-			= (CrossSolver<GaussKernel, Matrix, Strategy>*) reader.getSolver();
+	CrossValidationSolver<GaussKernel, Matrix, Strategy> *solver
+			= (CrossValidationSolver<GaussKernel, Matrix, Strategy>*) reader.getSolver();
 	timer.stop();
 
 	logger << format("input reading time: %.2f[s]\n") % timer.getTimeElapsed();
@@ -98,7 +98,7 @@ GridGaussianModelSelector<Matrix, Strategy>* ApplicationLauncher::createModelSel
 
 template<typename Matrix, typename Strategy>
 void ApplicationLauncher::performModelSelection() {
-	CrossSolver<GaussKernel, Matrix, Strategy> *solver = createSolver<Matrix, Strategy>();
+	CrossValidationSolver<GaussKernel, Matrix, Strategy> *solver = createSolver<Matrix, Strategy>();
 
 	Timer timer(true);
 	GridGaussianModelSelector<Matrix, Strategy> *selector = createModelSelector<Matrix, Strategy>();
@@ -114,7 +114,7 @@ void ApplicationLauncher::performModelSelection() {
 
 template<typename Matrix, typename Strategy>
 void ApplicationLauncher::performNestedCrossValidation() {
-	CrossSolver<GaussKernel, Matrix, Strategy> *solver = createSolver<Matrix, Strategy>();
+	CrossValidationSolver<GaussKernel, Matrix, Strategy> *solver = createSolver<Matrix, Strategy>();
 
 	Timer timer(true);
 	GridGaussianModelSelector<Matrix, Strategy> *selector = createModelSelector<Matrix, Strategy>();
@@ -130,7 +130,7 @@ void ApplicationLauncher::performNestedCrossValidation() {
 
 template<typename Matrix, typename Strategy>
 void ApplicationLauncher::performCrossValidation() {
-	CrossSolver<GaussKernel, Matrix, Strategy> *solver = createSolver<Matrix, Strategy>();
+	CrossValidationSolver<GaussKernel, Matrix, Strategy> *solver = createSolver<Matrix, Strategy>();
 
 	Timer timer(true);
 	GaussKernel param(conf.searchRange.gammaLow);
@@ -146,7 +146,7 @@ void ApplicationLauncher::performCrossValidation() {
 
 template<typename Matrix, typename Strategy>
 void ApplicationLauncher::performTraining() {
-	CrossSolver<GaussKernel, Matrix, Strategy> *solver = createSolver<Matrix, Strategy>();
+	CrossValidationSolver<GaussKernel, Matrix, Strategy> *solver = createSolver<Matrix, Strategy>();
 
 	Timer timer(true);
 	GaussKernel param(conf.searchRange.gammaLow);
