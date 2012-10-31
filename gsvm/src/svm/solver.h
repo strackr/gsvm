@@ -124,14 +124,16 @@ class UniversalSolver: public Solver<Kernel, Matrix>, public StateHolder<Matrix>
 protected:
 	sample_id findMinNormViolator(fvalue threshold);
 
-	virtual CachedKernelEvaluator<Kernel, Matrix, Strategy>* buildCache(fvalue c, Kernel &gparams);
+	CachedKernelEvaluator<Kernel, Matrix, Strategy>* buildCache(
+			fvalue c, Kernel &gparams);
 	CrossClassifier<Kernel, Matrix>* buildClassifier();
 
 	void refreshDistr();
 
 public:
-	UniversalSolver(map<label_id, string> labelNames, Matrix *samples, label_id *labels,
-			TrainParams &params, StopCriterionStrategy *stopStrategy);
+	UniversalSolver(map<label_id, string> labelNames, Matrix *samples,
+			label_id *labels, TrainParams &params,
+			StopCriterionStrategy *stopStrategy);
 	virtual ~UniversalSolver();
 
 	void setKernelParams(fvalue c, Kernel &params);
@@ -157,8 +159,10 @@ public:
 };
 
 template<typename Kernel, typename Matrix, typename Strategy>
-UniversalSolver<Kernel, Matrix, Strategy>::UniversalSolver(map<label_id, string> labelNames, Matrix *samples,
-		label_id *labels, TrainParams &params, StopCriterionStrategy *stopStrategy) :
+UniversalSolver<Kernel, Matrix, Strategy>::UniversalSolver(
+		map<label_id, string> labelNames, Matrix *samples,
+		label_id *labels, TrainParams &params,
+		StopCriterionStrategy *stopStrategy) :
 		labelNames(labelNames),
 		samples(samples),
 		labels(labels),
@@ -186,7 +190,8 @@ UniversalSolver<Kernel, Matrix, Strategy>::~UniversalSolver() {
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-void UniversalSolver<Kernel, Matrix, Strategy>::setKernelParams(fvalue c, Kernel &gparams) {
+void UniversalSolver<Kernel, Matrix, Strategy>::setKernelParams(
+		fvalue c, Kernel &gparams) {
 	if (cache == NULL) {
 		cache = buildCache(c, gparams);
 		cache->setSwapListener(listener);
@@ -196,7 +201,8 @@ void UniversalSolver<Kernel, Matrix, Strategy>::setKernelParams(fvalue c, Kernel
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-sample_id UniversalSolver<Kernel, Matrix, Strategy>::findMinNormViolator(fvalue threshold) {
+sample_id UniversalSolver<Kernel, Matrix, Strategy>::findMinNormViolator(
+		fvalue threshold) {
 	quantity attempt = 0;
 	while (attempt < params.drawNumber) {
 		sample_id violator = strategy.generateNextId();
@@ -226,7 +232,8 @@ void UniversalSolver<Kernel, Matrix, Strategy>::train() {
 	fvalue tau = cache->getTau();
 	fvalue finalEpsilon = params.epsilon;
 	if (finalEpsilon <= 0) {
-		finalEpsilon = stopStrategy->getEpsilon(cache->getTau(), cache->getC());
+		finalEpsilon = stopStrategy->getEpsilon(
+				cache->getTau(), cache->getC());
 	}
 	fvalue epsilon = STARTING_EPSILON;
 //	quantity minVal = currentSize / SHRINKING_LEVEL;
@@ -238,7 +245,8 @@ void UniversalSolver<Kernel, Matrix, Strategy>::train() {
 
 		do {
 			// main update
-			fvalue threshold = stopStrategy->getThreshold(cache->getWNorm(), tau, epsilon);
+			fvalue threshold = stopStrategy->getThreshold(
+					cache->getWNorm(), tau, epsilon);
 			mnviol = findMinNormViolator(threshold);
 			if (mnviol != INVALID_ID) {
 				sample_id kktviol = cache->findMaxSVKernelVal(mnviol);
@@ -265,10 +273,12 @@ void UniversalSolver<Kernel, Matrix, Strategy>::train() {
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-CachedKernelEvaluator<Kernel, Matrix, Strategy>* UniversalSolver<Kernel, Matrix, Strategy>::buildCache(fvalue c, Kernel &gparams) {
+CachedKernelEvaluator<Kernel, Matrix, Strategy>* UniversalSolver<Kernel, Matrix, Strategy>::buildCache(
+		fvalue c, Kernel &gparams) {
 	RbfKernelEvaluator<GaussKernel, Matrix> *rbf = new RbfKernelEvaluator<GaussKernel, Matrix>(
 			this->samples, this->labels, labelNames.size(), c, gparams);
-	return new CachedKernelEvaluator<GaussKernel, Matrix, Strategy>(rbf, &strategy, size, DEFAULT_CACHE_SIZE);
+	return new CachedKernelEvaluator<GaussKernel, Matrix, Strategy>(
+			rbf, &strategy, size, DEFAULT_CACHE_SIZE);
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
@@ -301,7 +311,8 @@ void UniversalSolver<Kernel, Matrix, Strategy>::refreshDistr() {
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-void UniversalSolver<Kernel, Matrix, Strategy>::setSwapListener(SwapListener *listener) {
+void UniversalSolver<Kernel, Matrix, Strategy>::setSwapListener(
+		SwapListener *listener) {
 	this->listener = listener;
 	if (cache) {
 		cache->setSwapListener(listener);
@@ -309,7 +320,8 @@ void UniversalSolver<Kernel, Matrix, Strategy>::setSwapListener(SwapListener *li
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-void UniversalSolver<Kernel, Matrix, Strategy>::swapSamples(sample_id u, sample_id v) {
+void UniversalSolver<Kernel, Matrix, Strategy>::swapSamples(
+		sample_id u, sample_id v) {
 	cache->swapSamples(u, v);
 }
 
@@ -324,7 +336,8 @@ void UniversalSolver<Kernel, Matrix, Strategy>::shrink() {
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-void UniversalSolver<Kernel, Matrix, Strategy>::releaseSupportVectors(fold_id *membership, fold_id fold) {
+void UniversalSolver<Kernel, Matrix, Strategy>::releaseSupportVectors(
+		fold_id *membership, fold_id fold) {
 	cache->releaseSupportVectors(membership, fold);
 }
 

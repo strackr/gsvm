@@ -200,7 +200,8 @@ CrossValidationSolver<Kernel, Matrix, Strategy>::~CrossValidationSolver() {
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-void CrossValidationSolver<Kernel, Matrix, Strategy>::sortVectors(fold_id *membership, fold_id fold, quantity num) {
+void CrossValidationSolver<Kernel, Matrix, Strategy>::sortVectors(
+		fold_id *membership, fold_id fold, quantity num) {
 	id train = 0;
 	id test = num - 1;
 	while (train < test) {
@@ -219,7 +220,8 @@ void CrossValidationSolver<Kernel, Matrix, Strategy>::sortVectors(fold_id *membe
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-void CrossValidationSolver<Kernel, Matrix, Strategy>::resetInnerFold(fold_id fold) {
+void CrossValidationSolver<Kernel, Matrix, Strategy>::resetInnerFold(
+		fold_id fold) {
 #ifdef SUPPORT_VECTOR_REUSE
 	solver->releaseSupportVectors(this->innerFoldsMembership, fold);
 	solver->shrink();
@@ -233,7 +235,8 @@ void CrossValidationSolver<Kernel, Matrix, Strategy>::resetInnerFold(fold_id fol
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-void CrossValidationSolver<Kernel, Matrix, Strategy>::resetOuterFold(fold_id fold) {
+void CrossValidationSolver<Kernel, Matrix, Strategy>::resetOuterFold(
+		fold_id fold) {
 	outerFold = fold;
 
 	sortVectors(this->outerFoldsMembership, fold, solver->getSize());
@@ -260,7 +263,8 @@ void CrossValidationSolver<Kernel, Matrix, Strategy>::trainOuter() {
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-TestingResult CrossValidationSolver<Kernel, Matrix, Strategy>::test(sample_id from, sample_id to) {
+TestingResult CrossValidationSolver<Kernel, Matrix, Strategy>::test(
+		sample_id from, sample_id to) {
 	label_id *labels = solver->getLabels();
 	quantity correct = 0;
 	CrossClassifier<Kernel, Matrix> *classifier = solver->getClassifier();
@@ -275,7 +279,8 @@ TestingResult CrossValidationSolver<Kernel, Matrix, Strategy>::test(sample_id fr
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-inline TestingResult CrossValidationSolver<Kernel, Matrix, Strategy>::testInner(fold_id fold) {
+inline TestingResult CrossValidationSolver<Kernel, Matrix, Strategy>::testInner(
+		fold_id fold) {
 	return test(this->innerFoldSizes[fold], this->outerFoldSizes[outerFold]);
 }
 
@@ -298,14 +303,17 @@ TestingResult CrossValidationSolver<Kernel, Matrix, Strategy>::doCrossValidation
 		timer.stop();
 
 		logger << format("inner fold %d/%d training: time=%.2f[s], sv=%d/%d\n")
-				% outerFold % innerFold % timer.getTimeElapsed() % solver->getSvNumber() % solver->getCurrentSize();
+				% outerFold % innerFold % timer.getTimeElapsed()
+				% solver->getSvNumber() % solver->getCurrentSize();
 
 		timer.restart();
-		TestingResult foldResult = test(this->innerFoldSizes[innerFold], this->outerFoldSizes[outerFold]);
+		TestingResult foldResult = test(
+				this->innerFoldSizes[innerFold], this->outerFoldSizes[outerFold]);
 		timer.stop();
 
 		logger << format("inner fold %d/%d testing: time=%.2f[s], accuracy=%.2f[%%]\n")
-				% outerFold % innerFold % timer.getTimeElapsed() % (100.0 * foldResult.accuracy);
+				% outerFold % innerFold
+				% timer.getTimeElapsed() % (100.0 * foldResult.accuracy);
 
 		result.accuracy += foldResult.accuracy / innerFoldsNumber;
 //		double ratio = (double) (this->outerFoldSizes[outerFold] - this->innerFoldSizes[innerFold])
