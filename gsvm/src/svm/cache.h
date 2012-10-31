@@ -89,35 +89,14 @@ struct Stats {
 };
 
 
-template<typename Strategy>
 class SwapListener {
 
-	fold_id *innerMembership;
-	fold_id *outerMembership;
-
-	Strategy *strategy;
-
 public:
-	SwapListener(fold_id *innerMembership, fold_id *outerMembership, Strategy *strategy);
+	virtual ~SwapListener() {};
 
-	void notify(sample_id u, sample_id v);
+	virtual void notify(sample_id u, sample_id v) = 0;
 
 };
-
-template<typename Strategy>
-SwapListener<Strategy>::SwapListener(fold_id *innerMembership, fold_id *outerMembership,
-		Strategy *strategy) :
-		innerMembership(innerMembership),
-		outerMembership(outerMembership),
-		strategy(strategy) {
-}
-
-template<typename Strategy>
-void SwapListener<Strategy>::notify(sample_id u, sample_id v) {
-	swap(innerMembership[u], innerMembership[v]);
-	swap(outerMembership[u], outerMembership[v]);
-	strategy->notifyExchange(u, v);
-}
 
 
 template<typename Kernel, typename Matrix, typename Strategy>
@@ -158,7 +137,7 @@ class CachedKernelEvaluator {
 	RbfKernelEvaluator<Kernel, Matrix> *evaluator;
 	Strategy *strategy;
 
-	SwapListener<Strategy> *listener;
+	SwapListener *listener;
 
 	Stats stats;
 
@@ -176,7 +155,7 @@ protected:
 
 public:
 	CachedKernelEvaluator(RbfKernelEvaluator<Kernel, Matrix> *evaluator, Strategy *strategy,
-			quantity probSize, quantity cchSize, SwapListener<Strategy> *listener);
+			quantity probSize, quantity cchSize, SwapListener *listener);
 	~CachedKernelEvaluator();
 
 	fvalue evalKernelUV(sample_id u, sample_id v);
@@ -195,6 +174,7 @@ public:
 	fvalue getWNorm();
 	bool performSvUpdate(fvalue threshold, quantity minViol);
 
+	void setSwapListener(SwapListener *listener);
 	void swapSamples(sample_id u, sample_id v);
 	void reset();
 	void shrink();
@@ -215,7 +195,7 @@ public:
 template<typename Kernel, typename Matrix, typename Strategy>
 CachedKernelEvaluator<Kernel, Matrix, Strategy>::CachedKernelEvaluator(
 		RbfKernelEvaluator<Kernel, Matrix> *evaluator, Strategy *strategy,
-		quantity probSize, quantity cchSize, SwapListener<Strategy> *listener = NULL) :
+		quantity probSize, quantity cchSize, SwapListener *listener = NULL) :
 		evaluator(evaluator),
 		strategy(strategy),
 		listener(listener) {
@@ -621,10 +601,17 @@ void CachedKernelEvaluator<Kernel, Matrix, Strategy>::releaseSupportVectors(fold
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
+void CachedKernelEvaluator<Kernel, Matrix, Strategy>::setSwapListener(SwapListener *listener) {
+	this->listener = listener;
+}
+
+template<typename Kernel, typename Matrix, typename Strategy>
 void CachedKernelEvaluator<Kernel, Matrix, Strategy>::swapSamples(sample_id u, sample_id v) {
 	evaluator->swapSamples(u, v);
 	swap(alphas[u], alphas[v]);
 	swap(kernelValues[u], kernelValues[v]);
+
+	strategy->notifyExchange(u, v);
 	if (listener) {
 		listener->notify(u, v);
 	}

@@ -139,8 +139,9 @@ TestingResult GridGaussianModelSelector<Matrix, Strategy>::doNestedCrossValidati
 		solver.trainOuter();
 		timer.stop();
 
+		StateHolder<Matrix> &stateHolder = solver.getStateHolder();
 		logger << format("outer fold %d final training: time=%.2f[s], sv=%d/%d\n")
-				% fold % timer.getTimeElapsed() % solver.getSvNumber() % solver.getOuterProblemSize();
+				% fold % timer.getTimeElapsed() % stateHolder.getSvNumber() % solver.getOuterProblemSize();
 
 		timer.restart();
 		TestingResult current = solver.testOuter();

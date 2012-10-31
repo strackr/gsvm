@@ -39,7 +39,10 @@ class ApplicationLauncher {
 
 protected:
 	template<typename Matrix, typename Strategy>
-	CrossValidationSolver<GaussKernel, Matrix, Strategy>* createSolver();
+	CrossValidationSolver<GaussKernel, Matrix, Strategy>* createCrossValidator();
+
+	template<typename Matrix, typename Strategy>
+	UniversalSolver<GaussKernel, Matrix, Strategy>* createSolver();
 
 	template<typename Matrix, typename Strategy>
 	GridGaussianModelSelector<Matrix, Strategy>* createModelSelector();
@@ -65,17 +68,30 @@ public:
 };
 
 template<typename Matrix, typename Strategy>
-CrossValidationSolver<GaussKernel, Matrix, Strategy>* ApplicationLauncher::createSolver() {
+CrossValidationSolver<GaussKernel, Matrix, Strategy>* ApplicationLauncher::createCrossValidator() {
 	ifstream input(conf.dataFile.c_str());
-	DefaultSolverBuilder<Matrix, Strategy> reader(input,
-			conf.trainingParams,
-			conf.stopCriterion,
-			conf.validation.innerFolds,
-			conf.validation.outerFolds);
+	DefaultSolverFactory<Matrix, Strategy> reader(
+			input, conf.trainingParams, conf.stopCriterion);
 
 	Timer timer(true);
 	CrossValidationSolver<GaussKernel, Matrix, Strategy> *solver
-			= (CrossValidationSolver<GaussKernel, Matrix, Strategy>*) reader.getSolver();
+			= (CrossValidationSolver<GaussKernel, Matrix, Strategy>*) reader.getCrossValidationSolver(
+					conf.validation.innerFolds, conf.validation.outerFolds);
+	timer.stop();
+
+	logger << format("input reading time: %.2f[s]\n") % timer.getTimeElapsed();
+	input.close();
+	return solver;
+}
+
+template<typename Matrix, typename Strategy>
+UniversalSolver<GaussKernel, Matrix, Strategy>* ApplicationLauncher::createSolver() {
+	ifstream input(conf.dataFile.c_str());
+	DefaultSolverFactory<Matrix, Strategy> reader(
+			input, conf.trainingParams, conf.stopCriterion);
+
+	Timer timer(true);
+	UniversalSolver<GaussKernel, Matrix, Strategy> *solver = reader.getUniversalSolver();
 	timer.stop();
 
 	logger << format("input reading time: %.2f[s]\n") % timer.getTimeElapsed();
@@ -98,7 +114,7 @@ GridGaussianModelSelector<Matrix, Strategy>* ApplicationLauncher::createModelSel
 
 template<typename Matrix, typename Strategy>
 void ApplicationLauncher::performModelSelection() {
-	CrossValidationSolver<GaussKernel, Matrix, Strategy> *solver = createSolver<Matrix, Strategy>();
+	CrossValidationSolver<GaussKernel, Matrix, Strategy> *solver = createCrossValidator<Matrix, Strategy>();
 
 	Timer timer(true);
 	GridGaussianModelSelector<Matrix, Strategy> *selector = createModelSelector<Matrix, Strategy>();
@@ -114,7 +130,7 @@ void ApplicationLauncher::performModelSelection() {
 
 template<typename Matrix, typename Strategy>
 void ApplicationLauncher::performNestedCrossValidation() {
-	CrossValidationSolver<GaussKernel, Matrix, Strategy> *solver = createSolver<Matrix, Strategy>();
+	CrossValidationSolver<GaussKernel, Matrix, Strategy> *solver = createCrossValidator<Matrix, Strategy>();
 
 	Timer timer(true);
 	GridGaussianModelSelector<Matrix, Strategy> *selector = createModelSelector<Matrix, Strategy>();
@@ -130,7 +146,7 @@ void ApplicationLauncher::performNestedCrossValidation() {
 
 template<typename Matrix, typename Strategy>
 void ApplicationLauncher::performCrossValidation() {
-	CrossValidationSolver<GaussKernel, Matrix, Strategy> *solver = createSolver<Matrix, Strategy>();
+	CrossValidationSolver<GaussKernel, Matrix, Strategy> *solver = createCrossValidator<Matrix, Strategy>();
 
 	Timer timer(true);
 	GaussKernel param(conf.searchRange.gammaLow);
@@ -146,11 +162,12 @@ void ApplicationLauncher::performCrossValidation() {
 
 template<typename Matrix, typename Strategy>
 void ApplicationLauncher::performTraining() {
-	CrossValidationSolver<GaussKernel, Matrix, Strategy> *solver = createSolver<Matrix, Strategy>();
+	UniversalSolver<GaussKernel, Matrix, Strategy> *solver = createSolver<Matrix, Strategy>();
 
 	Timer timer(true);
 	GaussKernel param(conf.searchRange.gammaLow);
 	solver->setKernelParams(conf.searchRange.cLow, param);
+	solver->train();
 	CrossClassifier<GaussKernel, Matrix>* classifier = solver->getClassifier();
 	timer.stop();
 

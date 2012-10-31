@@ -55,31 +55,14 @@ public:
 };
 
 
-template<typename Kernel, typename Matrix, typename Strategy>
-class SolverBuilder {
-
-public:
-	virtual UniversalSolver<Kernel, Matrix, Strategy>* getSolver() = 0;
-	virtual ~SolverBuilder();
-
-};
-
-template<typename Kernel, typename Matrix, typename Strategy>
-SolverBuilder<Kernel, Matrix, Strategy>::~SolverBuilder() {
-}
-
-
 template<typename Matrix, typename Strategy>
-class DefaultSolverBuilder: public SolverBuilder<GaussKernel, Matrix, Strategy> {
+class DefaultSolverFactory {
 
 private:
 	istream *input;
 	TrainParams params;
 
 	StopCriterion strategy;
-
-	quantity innerFolds;
-	quantity outerFolds;
 
 	bool reduceDim;
 
@@ -97,33 +80,26 @@ private:
 	Matrix* preprocess(Matrix *x, label_id *y);
 
 public:
-	DefaultSolverBuilder(istream &input, TrainParams &params, StopCriterion strategy,
-			quantity innerFolds, quantity outerFolds, bool reduceDim);
-	virtual ~DefaultSolverBuilder();
+	DefaultSolverFactory(istream &input, TrainParams &params, StopCriterion strategy, bool reduceDim);
 
-	virtual UniversalSolver<GaussKernel, Matrix, Strategy>* getSolver();
+	UniversalSolver<GaussKernel, Matrix, Strategy>* getUniversalSolver();
+	CrossValidationSolver<GaussKernel, Matrix, Strategy>* getCrossValidationSolver(
+			quantity innerFolds, quantity outerFolds);
 
 };
 
 template<typename Matrix, typename Strategy>
-DefaultSolverBuilder<Matrix, Strategy>::DefaultSolverBuilder(istream &input, TrainParams &params,
-		StopCriterion strategy = ADJMNORM, quantity innerFolds = 1, quantity outerFolds = 1,
-		bool reduceDim = false) :
+DefaultSolverFactory<Matrix, Strategy>::DefaultSolverFactory(istream &input, TrainParams &params,
+		StopCriterion strategy = ADJMNORM, bool reduceDim = false) :
 		input(&input),
 		params(params),
 		strategy(strategy),
-		innerFolds(innerFolds),
-		outerFolds(outerFolds),
 		reduceDim(reduceDim),
 		matrixBuilder(new FeatureMatrixBuilder<Matrix>()) {
 }
 
 template<typename Matrix, typename Strategy>
-DefaultSolverBuilder<Matrix, Strategy>::~DefaultSolverBuilder() {
-}
-
-template<typename Matrix, typename Strategy>
-UniversalSolver<GaussKernel, Matrix, Strategy>* DefaultSolverBuilder<Matrix, Strategy>::getSolver() {
+UniversalSolver<GaussKernel, Matrix, Strategy>* DefaultSolverFactory<Matrix, Strategy>::getUniversalSolver() {
 	map<string, label_id> labelIds;
 	list<label_id> sampleLabels;
 	list<map<feature_id, fvalue>*> sampleFeatures;
@@ -163,13 +139,19 @@ UniversalSolver<GaussKernel, Matrix, Strategy>* DefaultSolverBuilder<Matrix, Str
 
 	StopCriterionStrategy *strategy = getStopCriterion();
 
-	return new CrossValidationSolver<GaussKernel, Matrix, Strategy>(
-			labels, x, y, params, strategy, innerFolds, outerFolds);
-//	return new Solver<GaussKernel>(labels, x, y, params);
+	return new UniversalSolver<GaussKernel, Matrix, Strategy>(
+			labels, x, y, params, strategy);
 }
 
 template<typename Matrix, typename Strategy>
-map<label_id, string> DefaultSolverBuilder<Matrix, Strategy>::getLabelMap(
+CrossValidationSolver<GaussKernel, Matrix, Strategy>* DefaultSolverFactory<Matrix, Strategy>::getCrossValidationSolver(
+		quantity innerFolds, quantity outerFolds) {
+	UniversalSolver<GaussKernel, Matrix, Strategy> *solver = getUniversalSolver();
+	return new CrossValidationSolver<GaussKernel, Matrix, Strategy>(solver, innerFolds, outerFolds);
+}
+
+template<typename Matrix, typename Strategy>
+map<label_id, string> DefaultSolverFactory<Matrix, Strategy>::getLabelMap(
 		map<string, label_id> &labelIds) {
 	map<label_id, string> labels;
 	map<string, label_id>::iterator it;
@@ -180,7 +162,7 @@ map<label_id, string> DefaultSolverBuilder<Matrix, Strategy>::getLabelMap(
 }
 
 template<typename Matrix, typename Strategy>
-map<feature_id, feature_id> DefaultSolverBuilder<Matrix, Strategy>::findOptimalFeatureMappings(
+map<feature_id, feature_id> DefaultSolverFactory<Matrix, Strategy>::findOptimalFeatureMappings(
 		list<map<feature_id, fvalue>*> &features) {
 	quantity dimension = 0;
 	map<feature_id, fvalue> fmax;
@@ -219,14 +201,14 @@ map<feature_id, feature_id> DefaultSolverBuilder<Matrix, Strategy>::findOptimalF
 }
 
 template<typename Matrix, typename Strategy>
-Matrix* DefaultSolverBuilder<Matrix, Strategy>::getFeatureMatrix(list<map<feature_id, fvalue>*> &features,
+Matrix* DefaultSolverFactory<Matrix, Strategy>::getFeatureMatrix(list<map<feature_id, fvalue>*> &features,
 		map<feature_id, feature_id> mappings) {
 	return matrixBuilder->getFeatureMatrix(features, mappings);
 }
 
 
 template<typename Matrix, typename Strategy>
-label_id* DefaultSolverBuilder<Matrix, Strategy>::getLabelVector(list<label_id> &labels) {
+label_id* DefaultSolverFactory<Matrix, Strategy>::getLabelVector(list<label_id> &labels) {
 	label_id *dataLabels = new label_id[labels.size()];
 	quantity id = 0;
 
@@ -238,7 +220,7 @@ label_id* DefaultSolverBuilder<Matrix, Strategy>::getLabelVector(list<label_id> 
 }
 
 template<typename Matrix, typename Strategy>
-StopCriterionStrategy* DefaultSolverBuilder<Matrix, Strategy>::getStopCriterion() {
+StopCriterionStrategy* DefaultSolverFactory<Matrix, Strategy>::getStopCriterion() {
 	switch (strategy) {
 	case MEB:
 		return new MebStopStrategy();
@@ -251,7 +233,7 @@ StopCriterionStrategy* DefaultSolverBuilder<Matrix, Strategy>::getStopCriterion(
 }
 
 template<typename Matrix, typename Strategy>
-map<feature_id, fvalue>* DefaultSolverBuilder<Matrix, Strategy>::readFeatures(
+map<feature_id, fvalue>* DefaultSolverFactory<Matrix, Strategy>::readFeatures(
 		istream &lineStream) {
 	map<feature_id, fvalue> *features = new map<feature_id, fvalue>();
 	while (!lineStream.eof()) {
@@ -267,7 +249,7 @@ map<feature_id, fvalue>* DefaultSolverBuilder<Matrix, Strategy>::readFeatures(
 }
 
 template<typename Matrix, typename Strategy>
-Matrix* DefaultSolverBuilder<Matrix, Strategy>::preprocess(Matrix *x, label_id *y) {
+Matrix* DefaultSolverFactory<Matrix, Strategy>::preprocess(Matrix *x, label_id *y) {
 	FeatureProcessor<Matrix> proc;
 	proc.normalize(x);
 	proc.randomize(x, y);
