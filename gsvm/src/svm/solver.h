@@ -72,7 +72,6 @@ template<typename Kernel, typename Matrix, typename Strategy>
 class UniversalSolver: public Solver<Kernel, Matrix> {
 
 	TrainParams params;
-	fvalue currentEpsilon;
 	StopCriterionStrategy *stopStrategy;
 
 protected:
@@ -90,7 +89,7 @@ protected:
 	CachedKernelEvaluator<Kernel, Matrix, Strategy> *cache;
 
 protected:
-	sample_id findMinNormViolator();
+	sample_id findMinNormViolator(fvalue threshold);
 
 	virtual CachedKernelEvaluator<Kernel, Matrix, Strategy>* buildCache(fvalue c, Kernel &gparams);
 	CrossClassifier<Kernel, Matrix>* buildClassifier();
@@ -132,7 +131,6 @@ UniversalSolver<Kernel, Matrix, Strategy>::UniversalSolver(map<label_id, string>
 	dimension = samples->width;
 
 	cache = NULL;
-	currentEpsilon = DEFAULT_EPSILON;
 
 	refreshDistr();
 }
@@ -157,9 +155,8 @@ void UniversalSolver<Kernel, Matrix, Strategy>::setKernelParams(fvalue c, Kernel
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-sample_id UniversalSolver<Kernel, Matrix, Strategy>::findMinNormViolator() {
+sample_id UniversalSolver<Kernel, Matrix, Strategy>::findMinNormViolator(fvalue threshold) {
 	quantity attempt = 0;
-	fvalue threshold = stopStrategy->getThreshold(cache->getWNorm(), cache->getTau(), currentEpsilon);
 	while (attempt < params.drawNumber) {
 		sample_id violator = strategy.generateNextId();
 		if (cache->checkViolation(violator, threshold)) {
@@ -186,21 +183,23 @@ CrossClassifier<Kernel, Matrix>* UniversalSolver<Kernel, Matrix, Strategy>::getC
 template<typename Kernel, typename Matrix, typename Strategy>
 void UniversalSolver<Kernel, Matrix, Strategy>::train() {
 	sample_id mnviol = INVALID_ID;
+	fvalue tau = cache->getTau();
 	fvalue finalEpsilon = params.epsilon;
 	if (finalEpsilon <= 0) {
 		finalEpsilon = stopStrategy->getEpsilon(cache->getTau(), cache->getC());
 	}
-	currentEpsilon = STARTING_EPSILON;
+	fvalue epsilon = STARTING_EPSILON;
 //	quantity minVal = currentSize / SHRINKING_LEVEL;
 	do {
-		currentEpsilon /= EPSILON_SHRINKING_FACTOR;
-		if (currentEpsilon < finalEpsilon) {
-			currentEpsilon = finalEpsilon;
+		epsilon /= EPSILON_SHRINKING_FACTOR;
+		if (epsilon < finalEpsilon) {
+			epsilon = finalEpsilon;
 		}
 
 		do {
 			// main update
-			mnviol = findMinNormViolator();
+			fvalue threshold = stopStrategy->getThreshold(cache->getWNorm(), tau, epsilon);
+			mnviol = findMinNormViolator(threshold);
 			if (mnviol != INVALID_ID) {
 				sample_id kktviol = cache->findMaxSVKernelVal(mnviol);
 
@@ -210,7 +209,7 @@ void UniversalSolver<Kernel, Matrix, Strategy>::train() {
 			// shrinking
 			if (cache->getSVNumber() > COMPRESS_THRES) {
 				for (int i = 0; i < MAX_REFINE_ITER; i++) {
-					cache->performSvUpdate(cache->getTau(), 0);
+					cache->performSvUpdate(tau, 0);
 				}
 			}
 
@@ -222,7 +221,7 @@ void UniversalSolver<Kernel, Matrix, Strategy>::train() {
 //				iter++;
 //			} while (cache->performSvUpdate(threshold, minVal) && iter < SHRINKING_ITERS);
 		} while (mnviol != INVALID_ID);
-	} while (currentEpsilon > finalEpsilon);
+	} while (epsilon > finalEpsilon);
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
