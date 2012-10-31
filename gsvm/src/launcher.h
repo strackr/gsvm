@@ -151,7 +151,7 @@ void ApplicationLauncher::performTraining() {
 	Timer timer(true);
 	GaussKernel param(conf.searchRange.gammaLow);
 	solver->setKernelParams(conf.searchRange.cLow, param);
-	CrossClassifier<GaussKernel, Matrix, Strategy>* classifier = solver->getClassifier();
+	CrossClassifier<GaussKernel, Matrix>* classifier = solver->getClassifier();
 	timer.stop();
 
 	Matrix *samples = solver->getSamples();

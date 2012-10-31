@@ -76,7 +76,7 @@ protected:
 	sample_id findMinNormViolator();
 
 	virtual CachedKernelEvaluator<Kernel, Matrix, Strategy>* buildCache(fvalue c, Kernel &gparams);
-	CrossClassifier<Kernel, Matrix, Strategy>* buildClassifier();
+	CrossClassifier<Kernel, Matrix>* buildClassifier();
 
 	void train();
 	void shrink();
@@ -91,7 +91,7 @@ public:
 
 	void setKernelParams(fvalue c, Kernel &params);
 
-	CrossClassifier<Kernel, Matrix, Strategy>* getClassifier();
+	CrossClassifier<Kernel, Matrix>* getClassifier();
 
 	Matrix* getSamples();
 	label_id* getLabels();
@@ -161,7 +161,7 @@ void Solver<Kernel, Matrix, Strategy>::reportStatistics() {
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-CrossClassifier<Kernel, Matrix, Strategy>* Solver<Kernel, Matrix, Strategy>::getClassifier() {
+CrossClassifier<Kernel, Matrix>* Solver<Kernel, Matrix, Strategy>::getClassifier() {
 	train();
 	return buildClassifier();
 }
@@ -221,10 +221,10 @@ CachedKernelEvaluator<Kernel, Matrix, Strategy>* Solver<Kernel, Matrix, Strategy
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-CrossClassifier<Kernel, Matrix, Strategy>* Solver<Kernel, Matrix, Strategy>::buildClassifier() {
+CrossClassifier<Kernel, Matrix>* Solver<Kernel, Matrix, Strategy>::buildClassifier() {
 	fvector *buffer = cache->getBuffer();
 	buffer->size = cache->getSVNumber();
-	return new CrossClassifier<Kernel, Matrix, Strategy>(cache->getEvaluator(),
+	return new CrossClassifier<Kernel, Matrix>(cache->getEvaluator(),
 			cache->getAlphas(), labels, buffer, labelNames.size(),
 			cache->getSVNumber());
 }

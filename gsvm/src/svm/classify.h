@@ -23,7 +23,7 @@
 
 #include <map>
 
-template<typename Kernel, typename Matrix, typename Strategy>
+template<typename Kernel, typename Matrix>
 class CrossClassifier {
 	RbfKernelEvaluator<Kernel, Matrix> *evaluator;
 
@@ -48,8 +48,8 @@ public:
 
 };
 
-template<typename Kernel, typename Matrix, typename Strategy>
-CrossClassifier<Kernel, Matrix, Strategy>::CrossClassifier(
+template<typename Kernel, typename Matrix>
+CrossClassifier<Kernel, Matrix>::CrossClassifier(
 		RbfKernelEvaluator<Kernel, Matrix> *evaluator,
 		fvector *alphas, label_id *labels, fvector *kernelBuffer,
 		quantity labelNumber, quantity svNumber) :
@@ -74,14 +74,14 @@ CrossClassifier<Kernel, Matrix, Strategy>::CrossClassifier(
 	}
 }
 
-template<typename Kernel, typename Matrix, typename Strategy>
-CrossClassifier<Kernel, Matrix, Strategy>::~CrossClassifier() {
+template<typename Kernel, typename Matrix>
+CrossClassifier<Kernel, Matrix>::~CrossClassifier() {
 	fvector_free(labelBuffer);
 	fvector_free(biasBuffer);
 }
 
-template<typename Kernel, typename Matrix, typename Strategy>
-label_id CrossClassifier<Kernel, Matrix, Strategy>::classify(sample_id sample) {
+template<typename Kernel, typename Matrix>
+label_id CrossClassifier<Kernel, Matrix>::classify(sample_id sample) {
 	evaluator->evalInnerKernel(sample, 0, svNumber, kernelBuffer);
 	fvector_mul(kernelBuffer, alphas);
 
@@ -102,8 +102,8 @@ label_id CrossClassifier<Kernel, Matrix, Strategy>::classify(sample_id sample) {
 	return fvector_max(labelBuffer);
 }
 
-template<typename Kernel, typename Matrix, typename Strategy>
-quantity CrossClassifier<Kernel, Matrix, Strategy>::getSvNumber() {
+template<typename Kernel, typename Matrix>
+quantity CrossClassifier<Kernel, Matrix>::getSvNumber() {
 	return svNumber;
 }
 

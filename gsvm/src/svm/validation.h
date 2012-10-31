@@ -218,7 +218,7 @@ void CrossValidationSolver<Kernel, Matrix, Strategy>::trainOuter() {
 template<typename Kernel, typename Matrix, typename Strategy>
 TestingResult CrossValidationSolver<Kernel, Matrix, Strategy>::test(sample_id from, sample_id to) {
 	quantity correct = 0;
-	CrossClassifier<Kernel, Matrix, Strategy> *classifier = this->buildClassifier();
+	CrossClassifier<Kernel, Matrix> *classifier = this->buildClassifier();
 	for (sample_id test = from; test < to; test++) {
 		label_id label = classifier->classify(test);
 		if (label == this->labels[test]) {
