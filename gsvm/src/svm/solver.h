@@ -51,8 +51,25 @@
 using namespace std;
 
 
-template<typename Kernel, typename Matrix, typename Strategy>
+template<typename Kernel, typename Matrix>
 class Solver {
+
+public:
+	virtual ~Solver() {};
+
+	virtual void setKernelParams(fvalue c, Kernel &params) = 0;
+	virtual CrossClassifier<Kernel, Matrix>* getClassifier() = 0;
+
+	virtual Matrix* getSamples() = 0;
+	virtual label_id* getLabels() = 0;
+
+	virtual quantity getSvNumber() = 0;
+
+};
+
+
+template<typename Kernel, typename Matrix, typename Strategy>
+class UniversalSolver: public Solver<Kernel, Matrix> {
 
 	TrainParams params;
 	fvalue currentEpsilon;
@@ -85,9 +102,9 @@ protected:
 	void refreshDistr();
 
 public:
-	Solver(map<label_id, string> labelNames, Matrix *samples, label_id *labels,
+	UniversalSolver(map<label_id, string> labelNames, Matrix *samples, label_id *labels,
 			TrainParams &params, StopCriterionStrategy *stopStrategy);
-	virtual ~Solver();
+	virtual ~UniversalSolver();
 
 	void setKernelParams(fvalue c, Kernel &params);
 
@@ -102,7 +119,7 @@ public:
 };
 
 template<typename Kernel, typename Matrix, typename Strategy>
-Solver<Kernel, Matrix, Strategy>::Solver(map<label_id, string> labelNames, Matrix *samples,
+UniversalSolver<Kernel, Matrix, Strategy>::UniversalSolver(map<label_id, string> labelNames, Matrix *samples,
 		label_id *labels, TrainParams &params, StopCriterionStrategy *stopStrategy) :
 		labelNames(labelNames),
 		samples(samples),
@@ -121,7 +138,7 @@ Solver<Kernel, Matrix, Strategy>::Solver(map<label_id, string> labelNames, Matri
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-Solver<Kernel, Matrix, Strategy>::~Solver() {
+UniversalSolver<Kernel, Matrix, Strategy>::~UniversalSolver() {
 	if (cache) {
 		delete cache;
 	}
@@ -131,7 +148,7 @@ Solver<Kernel, Matrix, Strategy>::~Solver() {
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-void Solver<Kernel, Matrix, Strategy>::setKernelParams(fvalue c, Kernel &gparams) {
+void UniversalSolver<Kernel, Matrix, Strategy>::setKernelParams(fvalue c, Kernel &gparams) {
 	if (cache == NULL) {
 		cache = buildCache(c, gparams);
 	} else {
@@ -140,7 +157,7 @@ void Solver<Kernel, Matrix, Strategy>::setKernelParams(fvalue c, Kernel &gparams
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-sample_id Solver<Kernel, Matrix, Strategy>::findMinNormViolator() {
+sample_id UniversalSolver<Kernel, Matrix, Strategy>::findMinNormViolator() {
 	quantity attempt = 0;
 	fvalue threshold = stopStrategy->getThreshold(cache->getWNorm(), cache->getTau(), currentEpsilon);
 	while (attempt < params.drawNumber) {
@@ -156,18 +173,18 @@ sample_id Solver<Kernel, Matrix, Strategy>::findMinNormViolator() {
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-void Solver<Kernel, Matrix, Strategy>::reportStatistics() {
+void UniversalSolver<Kernel, Matrix, Strategy>::reportStatistics() {
 	cache->reportStatistics();
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-CrossClassifier<Kernel, Matrix>* Solver<Kernel, Matrix, Strategy>::getClassifier() {
+CrossClassifier<Kernel, Matrix>* UniversalSolver<Kernel, Matrix, Strategy>::getClassifier() {
 	train();
 	return buildClassifier();
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-void Solver<Kernel, Matrix, Strategy>::train() {
+void UniversalSolver<Kernel, Matrix, Strategy>::train() {
 	sample_id mnviol = INVALID_ID;
 	fvalue finalEpsilon = params.epsilon;
 	if (finalEpsilon <= 0) {
@@ -209,19 +226,19 @@ void Solver<Kernel, Matrix, Strategy>::train() {
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-void Solver<Kernel, Matrix, Strategy>::shrink() {
+void UniversalSolver<Kernel, Matrix, Strategy>::shrink() {
 	cache->shrink();
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-CachedKernelEvaluator<Kernel, Matrix, Strategy>* Solver<Kernel, Matrix, Strategy>::buildCache(fvalue c, Kernel &gparams) {
+CachedKernelEvaluator<Kernel, Matrix, Strategy>* UniversalSolver<Kernel, Matrix, Strategy>::buildCache(fvalue c, Kernel &gparams) {
 	RbfKernelEvaluator<GaussKernel, Matrix> *rbf = new RbfKernelEvaluator<GaussKernel, Matrix>(
 			this->samples, this->labels, labelNames.size(), c, gparams);
 	return new CachedKernelEvaluator<GaussKernel, Matrix, Strategy>(rbf, &strategy, size, DEFAULT_CACHE_SIZE);
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-CrossClassifier<Kernel, Matrix>* Solver<Kernel, Matrix, Strategy>::buildClassifier() {
+CrossClassifier<Kernel, Matrix>* UniversalSolver<Kernel, Matrix, Strategy>::buildClassifier() {
 	fvector *buffer = cache->getBuffer();
 	buffer->size = cache->getSVNumber();
 	return new CrossClassifier<Kernel, Matrix>(cache->getEvaluator(),
@@ -230,28 +247,28 @@ CrossClassifier<Kernel, Matrix>* Solver<Kernel, Matrix, Strategy>::buildClassifi
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-Matrix* Solver<Kernel, Matrix, Strategy>::getSamples() {
+Matrix* UniversalSolver<Kernel, Matrix, Strategy>::getSamples() {
 	return samples;
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-label_id* Solver<Kernel, Matrix, Strategy>::getLabels() {
+label_id* UniversalSolver<Kernel, Matrix, Strategy>::getLabels() {
 	return labels;
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-void Solver<Kernel, Matrix, Strategy>::setCurrentSize(quantity size) {
+void UniversalSolver<Kernel, Matrix, Strategy>::setCurrentSize(quantity size) {
 	currentSize = size;
 	refreshDistr();
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-void Solver<Kernel, Matrix, Strategy>::refreshDistr() {
+void UniversalSolver<Kernel, Matrix, Strategy>::refreshDistr() {
 	this->strategy.resetGenerator(labels, currentSize);
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-quantity Solver<Kernel, Matrix, Strategy>::getSvNumber() {
+quantity UniversalSolver<Kernel, Matrix, Strategy>::getSvNumber() {
 	return this->cache->getSVNumber();
 }
 

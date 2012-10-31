@@ -40,7 +40,7 @@ struct TestingResult {
 
 
 template<typename Kernel, typename Matrix, typename Strategy>
-class CrossValidationSolver: public Solver<Kernel, Matrix, Strategy> {
+class CrossValidationSolver: public UniversalSolver<Kernel, Matrix, Strategy> {
 
 protected:
 	fold_id *innerFoldsMembership;
@@ -86,7 +86,7 @@ template<typename Kernel, typename Matrix, typename Strategy>
 CrossValidationSolver<Kernel, Matrix, Strategy>::CrossValidationSolver(map<label_id, string> labelNames, Matrix *samples,
 		label_id *labels, TrainParams &params, StopCriterionStrategy *stopStrategy,
 		quantity innerFolds, quantity outerFolds, bool fairFoolds) :
-		Solver<Kernel, Matrix, Strategy>(labelNames, samples, labels, params, stopStrategy),
+		UniversalSolver<Kernel, Matrix, Strategy>(labelNames, samples, labels, params, stopStrategy),
 		innerFoldsNumber(innerFolds),
 		outerFoldsNumber(outerFolds) {
 	innerFoldsMembership = new fold_id[this->size];

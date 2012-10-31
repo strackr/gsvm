@@ -59,7 +59,7 @@ template<typename Kernel, typename Matrix, typename Strategy>
 class SolverBuilder {
 
 public:
-	virtual Solver<Kernel, Matrix, Strategy>* getSolver() = 0;
+	virtual UniversalSolver<Kernel, Matrix, Strategy>* getSolver() = 0;
 	virtual ~SolverBuilder();
 
 };
@@ -101,7 +101,7 @@ public:
 			quantity innerFolds, quantity outerFolds, bool reduceDim);
 	virtual ~DefaultSolverBuilder();
 
-	virtual Solver<GaussKernel, Matrix, Strategy>* getSolver();
+	virtual UniversalSolver<GaussKernel, Matrix, Strategy>* getSolver();
 
 };
 
@@ -123,7 +123,7 @@ DefaultSolverBuilder<Matrix, Strategy>::~DefaultSolverBuilder() {
 }
 
 template<typename Matrix, typename Strategy>
-Solver<GaussKernel, Matrix, Strategy>* DefaultSolverBuilder<Matrix, Strategy>::getSolver() {
+UniversalSolver<GaussKernel, Matrix, Strategy>* DefaultSolverBuilder<Matrix, Strategy>::getSolver() {
 	map<string, label_id> labelIds;
 	list<label_id> sampleLabels;
 	list<map<feature_id, fvalue>*> sampleFeatures;
