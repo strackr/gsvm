@@ -54,6 +54,10 @@ using namespace std;
 template<typename Kernel, typename Matrix, typename Strategy>
 class Solver {
 
+	TrainParams params;
+	fvalue currentEpsilon;
+	StopCriterionStrategy *stopStrategy;
+
 protected:
 	map<label_id, string> labelNames;
 
@@ -67,12 +71,6 @@ protected:
 	Strategy strategy;
 
 	CachedKernelEvaluator<Kernel, Matrix, Strategy> *cache;
-
-	TrainParams params;
-
-	fvalue currentEpsilon;
-
-	StopCriterionStrategy *stopStrategy;
 
 protected:
 	sample_id findMinNormViolator();
