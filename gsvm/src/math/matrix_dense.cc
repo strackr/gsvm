@@ -16,19 +16,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  **************************************************************************/
 
-#include "sparse.h"
+#include "matrix_dense.h"
 
-SparseMatrix::SparseMatrix(fvalue *values, feature_id *features, id *offsets,
-		size_t size1, size_t size2) :
-		values(values),
-		features(features),
-		offsets(offsets),
-		height(size1),
-		width(size2) {
+DenseMatrix::DenseMatrix(fmatrix *matrix) :
+		matrix(matrix) {
+	forwardMap = new sample_id[matrix->size1];
+	reverseMap = new sample_id[matrix->size1];
+	for (sample_id i = 0; i < matrix->size1; i++) {
+		forwardMap[i] = i;
+		reverseMap[i] = i;
+	}
+	orderRange = matrix->size1;
+	height = matrix->size1;
+	width = matrix->size2;
 }
 
-SparseMatrix::~SparseMatrix() {
-	delete [] values;
-	delete [] features;
-	delete [] offsets;
+DenseMatrix::~DenseMatrix() {
+	fmatrix_free(matrix);
+	delete [] forwardMap;
+	delete [] reverseMap;
 }

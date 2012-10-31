@@ -22,8 +22,8 @@
 #include <algorithm>
 
 #include "numeric.h"
-#include "sparse.h"
-#include "dense.h"
+#include "matrix_sparse.h"
+#include "matrix_dense.h"
 
 template<typename Matrix>
 class EvaluatorWorkspace {

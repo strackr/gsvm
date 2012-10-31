@@ -5,8 +5,8 @@ gsvm_SOURCES = \
 		src/launcher.cc \
 		src/math/numeric.cc \
 		src/math/matrix.cc \
-		src/math/dense.cc \
-		src/math/sparse.cc \
+		src/math/matrix_dense.cc \
+		src/math/matrix_sparse.cc \
 		src/math/random.cc \
 		src/svm/kernel.cc \
 		src/svm/stop.cc \
