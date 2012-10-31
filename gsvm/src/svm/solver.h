@@ -98,6 +98,7 @@ public:
 	Matrix* getSamples();
 	label_id* getLabels();
 
+	quantity getSvNumber();
 	void reportStatistics();
 
 };
@@ -249,6 +250,11 @@ void Solver<Kernel, Matrix, Strategy>::setCurrentSize(quantity size) {
 template<typename Kernel, typename Matrix, typename Strategy>
 void Solver<Kernel, Matrix, Strategy>::refreshDistr() {
 	this->strategy.resetGenerator(labels, currentSize);
+}
+
+template<typename Kernel, typename Matrix, typename Strategy>
+quantity Solver<Kernel, Matrix, Strategy>::getSvNumber() {
+	return this->cache->getSVNumber();
 }
 
 #endif

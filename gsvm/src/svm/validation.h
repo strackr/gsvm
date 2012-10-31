@@ -60,7 +60,8 @@ protected:
 	TestingResult test(sample_id from, sample_id to);
 	TestingResult testInner(fold_id fold);
 
-protected:
+	void sortVectors(fold_id *membership, fold_id fold, quantity num);
+
 	virtual CachedKernelEvaluator<Kernel, Matrix, Strategy>* buildCache(fvalue c, Kernel &gparams);
 
 public:
@@ -74,28 +75,10 @@ public:
 	void trainOuter();
 	TestingResult testOuter();
 
-	quantity getInnerFoldsNumber() const {
-		return innerFoldsNumber;
-	}
-
-	quantity getOuterFoldsNumber() const {
-		return outerFoldsNumber;
-	}
-
-	fold_id getOuterFold() const {
-		return outerFold;
-	}
-
-	quantity getSvNumber() const {
-		return this->cache->getSVNumber();
-	}
-
-	quantity getOuterProblemSize() const {
-		return outerProblemSize;
-	}
-
-private:
-	void sortVectors(fold_id *membership, fold_id fold, quantity num);
+	quantity getInnerFoldsNumber();
+	quantity getOuterFoldsNumber();
+	fold_id getOuterFold();
+	quantity getOuterProblemSize();
 
 };
 
@@ -270,7 +253,7 @@ TestingResult CrossValidationSolver<Kernel, Matrix, Strategy>::doCrossValidation
 		timer.stop();
 
 		logger << format("inner fold %d/%d training: time=%.2f[s], sv=%d/%d\n")
-				% outerFold % innerFold % timer.getTimeElapsed() % getSvNumber() % this->currentSize;
+				% outerFold % innerFold % timer.getTimeElapsed() % this->getSvNumber() % this->currentSize;
 
 		timer.restart();
 		TestingResult foldResult = test(this->innerFoldSizes[innerFold], this->outerFoldSizes[outerFold]);
@@ -295,6 +278,26 @@ CachedKernelEvaluator<Kernel, Matrix, Strategy>* CrossValidationSolver<Kernel, M
 	SwapListener<Strategy> *listener = new SwapListener<Strategy>(
 			innerFoldsMembership, outerFoldsMembership, &this->strategy);
 	return new CachedKernelEvaluator<GaussKernel, Matrix, Strategy>(rbf, &this->strategy, this->size, DEFAULT_CACHE_SIZE, listener);
+}
+
+template<typename Kernel, typename Matrix, typename Strategy>
+quantity CrossValidationSolver<Kernel, Matrix, Strategy>::getInnerFoldsNumber() {
+	return innerFoldsNumber;
+}
+
+template<typename Kernel, typename Matrix, typename Strategy>
+quantity CrossValidationSolver<Kernel, Matrix, Strategy>::getOuterFoldsNumber() {
+	return outerFoldsNumber;
+}
+
+template<typename Kernel, typename Matrix, typename Strategy>
+fold_id CrossValidationSolver<Kernel, Matrix, Strategy>::getOuterFold() {
+	return outerFold;
+}
+
+template<typename Kernel, typename Matrix, typename Strategy>
+quantity CrossValidationSolver<Kernel, Matrix, Strategy>::getOuterProblemSize() {
+	return outerProblemSize;
 }
 
 #endif
