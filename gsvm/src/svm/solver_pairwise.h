@@ -16,19 +16,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  **************************************************************************/
 
-#ifndef SOLVER_UNIVERSAL_H_
-#define SOLVER_UNIVERSAL_H_
+#ifndef SOLVER_PAIRWISE_H_
+#define SOLVER_PAIRWISE_H_
 
 #include "solver_common.h"
 
 template<typename Kernel, typename Matrix, typename Strategy>
-class UniversalSolver: public AbstractSolver<Kernel, Matrix, Strategy> {
+class PairwiseSolver: public AbstractSolver<Kernel, Matrix, Strategy> {
 
 public:
-	UniversalSolver(map<label_id, string> labelNames, Matrix *samples,
+	PairwiseSolver(map<label_id, string> labelNames, Matrix *samples,
 			label_id *labels, TrainParams &params,
 			StopCriterionStrategy *stopStrategy);
-	virtual ~UniversalSolver();
+	virtual ~PairwiseSolver();
 
 	void train();
 	CrossClassifier<Kernel, Matrix>* getClassifier();
@@ -36,7 +36,7 @@ public:
 };
 
 template<typename Kernel, typename Matrix, typename Strategy>
-UniversalSolver<Kernel, Matrix, Strategy>::UniversalSolver(
+PairwiseSolver<Kernel, Matrix, Strategy>::PairwiseSolver(
 		map<label_id, string> labelNames, Matrix *samples,
 		label_id *labels, TrainParams &params,
 		StopCriterionStrategy *stopStrategy) :
@@ -44,16 +44,18 @@ UniversalSolver<Kernel, Matrix, Strategy>::UniversalSolver(
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-UniversalSolver<Kernel, Matrix, Strategy>::~UniversalSolver() {
+PairwiseSolver<Kernel, Matrix, Strategy>::~PairwiseSolver() {
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-CrossClassifier<Kernel, Matrix>* UniversalSolver<Kernel, Matrix, Strategy>::getClassifier() {
+CrossClassifier<Kernel, Matrix>* PairwiseSolver<Kernel, Matrix, Strategy>::getClassifier() {
+	// XXX create pairwise classifier
 	return this->buildClassifier();
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-void UniversalSolver<Kernel, Matrix, Strategy>::train() {
+void PairwiseSolver<Kernel, Matrix, Strategy>::train() {
+	// XXX do pairwise training
 	this->trainForCache(this->cache);
 }
 

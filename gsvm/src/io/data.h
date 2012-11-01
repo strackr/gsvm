@@ -32,6 +32,7 @@
 
 #include "../logging/log.h"
 #include "../svm/solver_universal.h"
+#include "../svm/solver_pairwise.h"
 #include "../svm/validation.h"
 #include "../feature/feature.h"
 

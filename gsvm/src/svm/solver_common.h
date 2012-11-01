@@ -130,7 +130,7 @@ protected:
 			fvalue c, Kernel &gparams);
 	CrossClassifier<Kernel, Matrix>* buildClassifier();
 
-	void trainForCurrentSettings();
+	void trainForCache(CachedKernelEvaluator<Kernel, Matrix, Strategy> *cache);
 
 	void refreshDistr();
 
@@ -232,7 +232,8 @@ CrossClassifier<Kernel, Matrix>* AbstractSolver<Kernel, Matrix, Strategy>::getCl
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-void AbstractSolver<Kernel, Matrix, Strategy>::trainForCurrentSettings() {
+void AbstractSolver<Kernel, Matrix, Strategy>::trainForCache(
+		CachedKernelEvaluator<Kernel, Matrix, Strategy> *cache) {
 	sample_id mnviol = INVALID_ID;
 	fvalue tau = cache->getTau();
 	fvalue finalEpsilon = params.epsilon;
