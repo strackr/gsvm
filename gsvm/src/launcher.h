@@ -42,7 +42,7 @@ protected:
 	CrossValidationSolver<GaussKernel, Matrix, Strategy>* createCrossValidator();
 
 	template<typename Matrix, typename Strategy>
-	UniversalSolver<GaussKernel, Matrix, Strategy>* createSolver();
+	AbstractSolver<GaussKernel, Matrix, Strategy>* createSolver();
 
 	template<typename Matrix, typename Strategy>
 	GridGaussianModelSelector<Matrix, Strategy>* createModelSelector();
@@ -71,7 +71,7 @@ template<typename Matrix, typename Strategy>
 CrossValidationSolver<GaussKernel, Matrix, Strategy>* ApplicationLauncher::createCrossValidator() {
 	ifstream input(conf.dataFile.c_str());
 	DefaultSolverFactory<Matrix, Strategy> reader(
-			input, conf.trainingParams, conf.stopCriterion);
+			input, conf.trainingParams, conf.stopCriterion, conf.multiclass);
 
 	Timer timer(true);
 	CrossValidationSolver<GaussKernel, Matrix, Strategy> *solver
@@ -85,13 +85,13 @@ CrossValidationSolver<GaussKernel, Matrix, Strategy>* ApplicationLauncher::creat
 }
 
 template<typename Matrix, typename Strategy>
-UniversalSolver<GaussKernel, Matrix, Strategy>* ApplicationLauncher::createSolver() {
+AbstractSolver<GaussKernel, Matrix, Strategy>* ApplicationLauncher::createSolver() {
 	ifstream input(conf.dataFile.c_str());
 	DefaultSolverFactory<Matrix, Strategy> reader(
-			input, conf.trainingParams, conf.stopCriterion);
+			input, conf.trainingParams, conf.stopCriterion, conf.multiclass);
 
 	Timer timer(true);
-	UniversalSolver<GaussKernel, Matrix, Strategy> *solver = reader.getUniversalSolver();
+	AbstractSolver<GaussKernel, Matrix, Strategy> *solver = reader.getUniversalSolver();
 	timer.stop();
 
 	logger << format("input reading time: %.2f[s]\n") % timer.getTimeElapsed();
@@ -162,7 +162,7 @@ void ApplicationLauncher::performCrossValidation() {
 
 template<typename Matrix, typename Strategy>
 void ApplicationLauncher::performTraining() {
-	UniversalSolver<GaussKernel, Matrix, Strategy> *solver = createSolver<Matrix, Strategy>();
+	AbstractSolver<GaussKernel, Matrix, Strategy> *solver = createSolver<Matrix, Strategy>();
 
 	Timer timer(true);
 	GaussKernel param(conf.searchRange.gammaLow);

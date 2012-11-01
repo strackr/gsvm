@@ -51,6 +51,7 @@ using namespace boost::program_options;
 #define PR_STOP_CRIT "stop-criterion,p"
 #define PR_OPTIMIZATION "optimization,z"
 #define PR_ID_RANDOMIZER "randomizer,s"
+#define PR_MULTICLASS "multiclass,u"
 
 #define PR_KEY_HELP "help"
 #define PR_KEY_C_LOW "c-low"
@@ -68,6 +69,7 @@ using namespace boost::program_options;
 #define PR_KEY_STOP_CRIT "stop-criterion"
 #define PR_KEY_OPTIMIZATION "optimization"
 #define PR_KEY_ID_RANDOMIZER "randomizer"
+#define PR_KEY_MULTICLASS "multiclass"
 
 #define SEL_TYPE_GRID "grid"
 #define SEL_TYPE_PATTERN "pattern"
@@ -88,6 +90,9 @@ using namespace boost::program_options;
 #define ID_RANDOMIZER_PLAIN "simple"
 #define ID_RANDOMIZER_FAIR "fair"
 #define ID_RANDOMIZER_DETERM "determ"
+
+#define MULTICLASS_ALL_AT_ONCE "allatonce"
+#define MULTICLASS_PAIRWISE "pairwise"
 
 
 class InvalidConfigurationException {
@@ -112,6 +117,7 @@ enum ModelSelectionType {
 	PATTERN
 };
 
+
 struct Configuration {
 
 	string dataFile;
@@ -128,9 +134,9 @@ struct Configuration {
 	MatrixType matrixType;
 	ViolationCriterion optimizationProcedure;
 	StopCriterion stopCriterion;
+	MulticlassType multiclass;
 
 	GeneratorType randomization;
-
 };
 
 

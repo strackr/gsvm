@@ -113,6 +113,16 @@ Configuration ParametersParser::getConfiguration() {
 		throw InvalidConfigurationException(msg);
 	}
 
+	string multiclass = vars[PR_KEY_MULTICLASS].as<string>();
+	if (MULTICLASS_ALL_AT_ONCE == multiclass) {
+		conf.multiclass = ALL_AT_ONCE;
+	} else if (MULTICLASS_PAIRWISE == multiclass) {
+		conf.multiclass = PAIRWISE;
+	} else {
+		string msg = (format("invalid multiclass approach: '%s'") % multiclass).str();
+		throw InvalidConfigurationException(msg);
+	}
+
 	string modelSelection = vars[PR_KEY_SEL_TYPE].as<string>();
 	if (SEL_TYPE_GRID == modelSelection) {
 		conf.validation.modelSelection = GRID;

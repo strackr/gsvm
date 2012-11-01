@@ -69,7 +69,7 @@ inline void CrossSolverSwapListener::notify(sample_id u, sample_id v) {
 template<typename Kernel, typename Matrix, typename Strategy>
 class CrossValidationSolver: public Solver<Kernel, Matrix>, public DataHolder<Matrix> {
 
-	UniversalSolver<Kernel, Matrix, Strategy> *solver;
+	AbstractSolver<Kernel, Matrix, Strategy> *solver;
 
 	fold_id *innerFoldsMembership;
 	quantity innerFoldsNumber;
@@ -92,7 +92,7 @@ protected:
 	void sortVectors(fold_id *membership, fold_id fold, quantity num);
 
 public:
-	CrossValidationSolver(UniversalSolver<Kernel, Matrix, Strategy> *solver,
+	CrossValidationSolver(AbstractSolver<Kernel, Matrix, Strategy> *solver,
 			quantity innerFolds, quantity outerFolds, bool fairFolds = true);
 	virtual ~CrossValidationSolver();
 
@@ -120,7 +120,7 @@ public:
 
 template<typename Kernel, typename Matrix, typename Strategy>
 CrossValidationSolver<Kernel, Matrix, Strategy>::CrossValidationSolver(
-		UniversalSolver<Kernel, Matrix, Strategy> *solver,
+		AbstractSolver<Kernel, Matrix, Strategy> *solver,
 		quantity innerFolds, quantity outerFolds, bool fairFoolds) :
 		solver(solver),
 		innerFoldsNumber(innerFolds),

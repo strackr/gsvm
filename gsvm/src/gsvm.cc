@@ -49,11 +49,12 @@ int main(int argc, char *argv[]) {
 		(PR_INNER_FLD, value<int>()->default_value(10), "inner folds")
 		(PR_EPSILON, value<string>()->default_value(EPSILON_DEFAULT), "epsilon value")
 		(PR_DRAW_NUM, value<int>()->default_value(600), "draw number")
+		(PR_MULTICLASS, value<string>()->default_value(MULTICLASS_ALL_AT_ONCE), "multiclass training approach (allatonce or pairwise)")
 		(PR_SEL_TYPE, value<string>()->default_value(SEL_TYPE_PATTERN), "model selection type (grid or pattern)")
 		(PR_MATRIX_TYPE, value<string>()->default_value(MAT_TYPE_SPARSE), "data representation (sparse or dense)")
 		(PR_STOP_CRIT, value<string>()->default_value(STOP_CRIT_ADJMN), "stopping criterion (adjmn, mn or meb)")
 		(PR_OPTIMIZATION, value<string>()->default_value(OPTIMIZATION_MDM), "optimization strategy (mdm or imdm)")
-		(PR_ID_RANDOMIZER, value<string>()->default_value(ID_RANDOMIZER_FAIR), "id generator (simple, fair, determ)")
+		(PR_ID_RANDOMIZER, value<string>()->default_value(ID_RANDOMIZER_FAIR), "id generator (simple, fair or determ)")
 		(PR_INPUT, value<string>(), "input file");
 
 	positional_options_description opt;

@@ -45,6 +45,11 @@ enum StopCriterion {
 	MEB
 };
 
+enum MulticlassType {
+	ALL_AT_ONCE,
+	PAIRWISE
+};
+
 
 template<typename Matrix>
 class FeatureMatrixBuilder {
@@ -61,9 +66,10 @@ class DefaultSolverFactory {
 
 private:
 	istream *input;
-	TrainParams params;
 
+	TrainParams params;
 	StopCriterion strategy;
+	MulticlassType multiclass;
 
 	bool reduceDim;
 
@@ -81,9 +87,10 @@ private:
 	Matrix* preprocess(Matrix *x, label_id *y);
 
 public:
-	DefaultSolverFactory(istream &input, TrainParams &params, StopCriterion strategy, bool reduceDim);
+	DefaultSolverFactory(istream &input, TrainParams &params,
+			StopCriterion strategy, MulticlassType multiclass, bool reduceDim);
 
-	UniversalSolver<GaussKernel, Matrix, Strategy>* getUniversalSolver();
+	AbstractSolver<GaussKernel, Matrix, Strategy>* getUniversalSolver();
 	CrossValidationSolver<GaussKernel, Matrix, Strategy>* getCrossValidationSolver(
 			quantity innerFolds, quantity outerFolds);
 
@@ -91,16 +98,17 @@ public:
 
 template<typename Matrix, typename Strategy>
 DefaultSolverFactory<Matrix, Strategy>::DefaultSolverFactory(istream &input, TrainParams &params,
-		StopCriterion strategy = ADJMNORM, bool reduceDim = false) :
+		StopCriterion strategy = ADJMNORM, MulticlassType multiclass = ALL_AT_ONCE, bool reduceDim = false) :
 		input(&input),
 		params(params),
 		strategy(strategy),
+		multiclass(multiclass),
 		reduceDim(reduceDim),
 		matrixBuilder(new FeatureMatrixBuilder<Matrix>()) {
 }
 
 template<typename Matrix, typename Strategy>
-UniversalSolver<GaussKernel, Matrix, Strategy>* DefaultSolverFactory<Matrix, Strategy>::getUniversalSolver() {
+AbstractSolver<GaussKernel, Matrix, Strategy>* DefaultSolverFactory<Matrix, Strategy>::getUniversalSolver() {
 	map<string, label_id> labelIds;
 	list<label_id> sampleLabels;
 	list<map<feature_id, fvalue>*> sampleFeatures;
@@ -147,7 +155,7 @@ UniversalSolver<GaussKernel, Matrix, Strategy>* DefaultSolverFactory<Matrix, Str
 template<typename Matrix, typename Strategy>
 CrossValidationSolver<GaussKernel, Matrix, Strategy>* DefaultSolverFactory<Matrix, Strategy>::getCrossValidationSolver(
 		quantity innerFolds, quantity outerFolds) {
-	UniversalSolver<GaussKernel, Matrix, Strategy> *solver = getUniversalSolver();
+	AbstractSolver<GaussKernel, Matrix, Strategy> *solver = getUniversalSolver();
 	return new CrossValidationSolver<GaussKernel, Matrix, Strategy>(solver, innerFolds, outerFolds);
 }
 
