@@ -31,7 +31,7 @@
 #include <vector>
 
 #include "../logging/log.h"
-#include "../svm/solver.h"
+#include "../svm/solver_universal.h"
 #include "../svm/validation.h"
 #include "../feature/feature.h"
 

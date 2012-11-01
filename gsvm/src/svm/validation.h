@@ -19,7 +19,7 @@
 #ifndef CV_H_
 #define CV_H_
 
-#include "solver.h"
+#include "solver_universal.h"
 #include "../time/timer.h"
 #include "../logging/log.h"
 #include "../math/random.h"

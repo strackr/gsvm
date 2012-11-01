@@ -102,8 +102,11 @@ public:
 
 
 template<typename Kernel, typename Matrix, typename Strategy>
-class UniversalSolver: public Solver<Kernel, Matrix>, public StateHolder<Matrix> {
+class AbstractSolver: public Solver<Kernel, Matrix>, public StateHolder<Matrix> {
 
+	SwapListener *listener;
+
+protected:
 	TrainParams params;
 	StopCriterionStrategy *stopStrategy;
 
@@ -118,7 +121,6 @@ class UniversalSolver: public Solver<Kernel, Matrix>, public StateHolder<Matrix>
 
 	Strategy strategy;
 
-	SwapListener *listener;
 	CachedKernelEvaluator<Kernel, Matrix, Strategy> *cache;
 
 protected:
@@ -128,16 +130,18 @@ protected:
 			fvalue c, Kernel &gparams);
 	CrossClassifier<Kernel, Matrix>* buildClassifier();
 
+	void trainForCurrentSettings();
+
 	void refreshDistr();
 
 public:
-	UniversalSolver(map<label_id, string> labelNames, Matrix *samples,
+	AbstractSolver(map<label_id, string> labelNames, Matrix *samples,
 			label_id *labels, TrainParams &params,
 			StopCriterionStrategy *stopStrategy);
-	virtual ~UniversalSolver();
+	virtual ~AbstractSolver();
 
 	void setKernelParams(fvalue c, Kernel &params);
-	void train();
+	virtual void train() = 0;
 	CrossClassifier<Kernel, Matrix>* getClassifier();
 
 	void setSwapListener(SwapListener *listener);
@@ -153,13 +157,14 @@ public:
 	map<label_id, string>& getLabelNames();
 
 	quantity getSize();
-	quantity getSvNumber();
+	virtual quantity getSvNumber();
+
 	void reportStatistics();
 
 };
 
 template<typename Kernel, typename Matrix, typename Strategy>
-UniversalSolver<Kernel, Matrix, Strategy>::UniversalSolver(
+AbstractSolver<Kernel, Matrix, Strategy>::AbstractSolver(
 		map<label_id, string> labelNames, Matrix *samples,
 		label_id *labels, TrainParams &params,
 		StopCriterionStrategy *stopStrategy) :
@@ -180,7 +185,7 @@ UniversalSolver<Kernel, Matrix, Strategy>::UniversalSolver(
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-UniversalSolver<Kernel, Matrix, Strategy>::~UniversalSolver() {
+AbstractSolver<Kernel, Matrix, Strategy>::~AbstractSolver() {
 	if (cache) {
 		delete cache;
 	}
@@ -190,7 +195,7 @@ UniversalSolver<Kernel, Matrix, Strategy>::~UniversalSolver() {
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-void UniversalSolver<Kernel, Matrix, Strategy>::setKernelParams(
+void AbstractSolver<Kernel, Matrix, Strategy>::setKernelParams(
 		fvalue c, Kernel &gparams) {
 	if (cache == NULL) {
 		cache = buildCache(c, gparams);
@@ -201,7 +206,7 @@ void UniversalSolver<Kernel, Matrix, Strategy>::setKernelParams(
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-sample_id UniversalSolver<Kernel, Matrix, Strategy>::findMinNormViolator(
+sample_id AbstractSolver<Kernel, Matrix, Strategy>::findMinNormViolator(
 		fvalue threshold) {
 	quantity attempt = 0;
 	while (attempt < params.drawNumber) {
@@ -217,17 +222,17 @@ sample_id UniversalSolver<Kernel, Matrix, Strategy>::findMinNormViolator(
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-void UniversalSolver<Kernel, Matrix, Strategy>::reportStatistics() {
+void AbstractSolver<Kernel, Matrix, Strategy>::reportStatistics() {
 	cache->reportStatistics();
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-CrossClassifier<Kernel, Matrix>* UniversalSolver<Kernel, Matrix, Strategy>::getClassifier() {
+CrossClassifier<Kernel, Matrix>* AbstractSolver<Kernel, Matrix, Strategy>::getClassifier() {
 	return buildClassifier();
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-void UniversalSolver<Kernel, Matrix, Strategy>::train() {
+void AbstractSolver<Kernel, Matrix, Strategy>::trainForCurrentSettings() {
 	sample_id mnviol = INVALID_ID;
 	fvalue tau = cache->getTau();
 	fvalue finalEpsilon = params.epsilon;
@@ -273,7 +278,7 @@ void UniversalSolver<Kernel, Matrix, Strategy>::train() {
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-CachedKernelEvaluator<Kernel, Matrix, Strategy>* UniversalSolver<Kernel, Matrix, Strategy>::buildCache(
+CachedKernelEvaluator<Kernel, Matrix, Strategy>* AbstractSolver<Kernel, Matrix, Strategy>::buildCache(
 		fvalue c, Kernel &gparams) {
 	RbfKernelEvaluator<GaussKernel, Matrix> *rbf = new RbfKernelEvaluator<GaussKernel, Matrix>(
 			this->samples, this->labels, labelNames.size(), c, gparams);
@@ -282,7 +287,7 @@ CachedKernelEvaluator<Kernel, Matrix, Strategy>* UniversalSolver<Kernel, Matrix,
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-CrossClassifier<Kernel, Matrix>* UniversalSolver<Kernel, Matrix, Strategy>::buildClassifier() {
+CrossClassifier<Kernel, Matrix>* AbstractSolver<Kernel, Matrix, Strategy>::buildClassifier() {
 	fvector *buffer = cache->getBuffer();
 	buffer->size = cache->getSVNumber();
 	return new CrossClassifier<Kernel, Matrix>(cache->getEvaluator(),
@@ -291,27 +296,27 @@ CrossClassifier<Kernel, Matrix>* UniversalSolver<Kernel, Matrix, Strategy>::buil
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-Matrix* UniversalSolver<Kernel, Matrix, Strategy>::getSamples() {
+Matrix* AbstractSolver<Kernel, Matrix, Strategy>::getSamples() {
 	return samples;
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-label_id* UniversalSolver<Kernel, Matrix, Strategy>::getLabels() {
+label_id* AbstractSolver<Kernel, Matrix, Strategy>::getLabels() {
 	return labels;
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-map<label_id, string>& UniversalSolver<Kernel, Matrix, Strategy>::getLabelNames() {
+map<label_id, string>& AbstractSolver<Kernel, Matrix, Strategy>::getLabelNames() {
 	return labelNames;
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-void UniversalSolver<Kernel, Matrix, Strategy>::refreshDistr() {
+void AbstractSolver<Kernel, Matrix, Strategy>::refreshDistr() {
 	this->strategy.resetGenerator(labels, currentSize);
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-void UniversalSolver<Kernel, Matrix, Strategy>::setSwapListener(
+void AbstractSolver<Kernel, Matrix, Strategy>::setSwapListener(
 		SwapListener *listener) {
 	this->listener = listener;
 	if (cache) {
@@ -320,45 +325,45 @@ void UniversalSolver<Kernel, Matrix, Strategy>::setSwapListener(
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-void UniversalSolver<Kernel, Matrix, Strategy>::swapSamples(
+void AbstractSolver<Kernel, Matrix, Strategy>::swapSamples(
 		sample_id u, sample_id v) {
 	cache->swapSamples(u, v);
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-void UniversalSolver<Kernel, Matrix, Strategy>::reset() {
+void AbstractSolver<Kernel, Matrix, Strategy>::reset() {
 	cache->reset();
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-void UniversalSolver<Kernel, Matrix, Strategy>::shrink() {
+void AbstractSolver<Kernel, Matrix, Strategy>::shrink() {
 	cache->shrink();
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-void UniversalSolver<Kernel, Matrix, Strategy>::releaseSupportVectors(
+void AbstractSolver<Kernel, Matrix, Strategy>::releaseSupportVectors(
 		fold_id *membership, fold_id fold) {
 	cache->releaseSupportVectors(membership, fold);
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-void UniversalSolver<Kernel, Matrix, Strategy>::setCurrentSize(quantity size) {
+void AbstractSolver<Kernel, Matrix, Strategy>::setCurrentSize(quantity size) {
 	currentSize = size;
 	refreshDistr();
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-inline quantity UniversalSolver<Kernel, Matrix, Strategy>::getCurrentSize() {
+inline quantity AbstractSolver<Kernel, Matrix, Strategy>::getCurrentSize() {
 	return currentSize;
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-quantity UniversalSolver<Kernel, Matrix, Strategy>::getSize() {
+quantity AbstractSolver<Kernel, Matrix, Strategy>::getSize() {
 	return size;
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-quantity UniversalSolver<Kernel, Matrix, Strategy>::getSvNumber() {
+quantity AbstractSolver<Kernel, Matrix, Strategy>::getSvNumber() {
 	return this->cache->getSVNumber();
 }
 
