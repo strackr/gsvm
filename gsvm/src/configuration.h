@@ -134,7 +134,7 @@ struct Configuration {
 	MatrixType matrixType;
 	ViolationCriterion optimizationProcedure;
 	StopCriterion stopCriterion;
-	MulticlassType multiclass;
+	MulticlassApproach multiclass;
 
 	GeneratorType randomization;
 };

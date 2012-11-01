@@ -91,7 +91,7 @@ AbstractSolver<GaussKernel, Matrix, Strategy>* ApplicationLauncher::createSolver
 			input, conf.trainingParams, conf.stopCriterion, conf.multiclass);
 
 	Timer timer(true);
-	AbstractSolver<GaussKernel, Matrix, Strategy> *solver = reader.getUniversalSolver();
+	AbstractSolver<GaussKernel, Matrix, Strategy> *solver = reader.getSolver();
 	timer.stop();
 
 	logger << format("input reading time: %.2f[s]\n") % timer.getTimeElapsed();
