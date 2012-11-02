@@ -128,15 +128,17 @@ void PairwiseSolver<Kernel, Matrix, Strategy>::train() {
 		fvalue* resultAlphas = it->alphas.data();
 		fvalue* cacheAlphas = this->cache->getAlphas()->data;
 		fvalue bias = 0;
+		sample_id* cacheSamples = this->cache->getBackwardOrder();
+		sample_id* resultSamples = it->samples.data();
 		quantity svNumber  = this->cache->getSVNumber();
 		for (quantity i = 0; i < svNumber; i++) {
 			fvalue alpha = cacheAlphas[i];
 			resultAlphas[i] = alpha;
+			resultSamples[i] = cacheSamples[i];
 			bias += alpha * (this->labels[i] == trainingPair.first ? 1.0 : -1.0);
 		}
 		it->bias = bias;
 		it->size = svNumber;
-		// TODO save samples
 	}
 }
 

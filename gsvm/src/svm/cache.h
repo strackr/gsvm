@@ -120,6 +120,8 @@ class CachedKernelEvaluator {
 	fvalue *cache;
 
 	fvectorv *views;
+	sample_id *forwardOrder;
+	sample_id *backwardOrder;
 
 	EntryMapping *mappings;
 	CacheEntry *entries;
@@ -186,10 +188,11 @@ public:
 	RbfKernelEvaluator<Kernel, Matrix>* getEvaluator();
 	fvector* getAlphas();
 	fvector* getBuffer();
+	sample_id* getBackwardOrder();
+	sample_id* getForwardOrder();
 
 	void structureCheck();
 	void reportStatistics();
-
 };
 
 template<typename Kernel, typename Matrix, typename Strategy>
@@ -220,6 +223,14 @@ CachedKernelEvaluator<Kernel, Matrix, Strategy>::CachedKernelEvaluator(
 	// initialize buffer
 	fbuffer = fvector_alloc(problemSize);
 	fbufferView = fvector_subv(fbuffer, 0, svnumber);
+
+	// initialize order
+	forwardOrder = new sample_id[problemSize];
+	backwardOrder = new sample_id[problemSize];
+	for (quantity i = 0; i < problemSize; i++) {
+		forwardOrder[i] = i;
+		backwardOrder[i] = i;
+	}
 
 	// initialize vector views
 	quantity offset = 0;
@@ -628,6 +639,10 @@ void CachedKernelEvaluator<Kernel, Matrix, Strategy>::swapSamples(sample_id u, s
 	if (vmap.cacheEntry != INVALID_ENTRY_ID) {
 		entries[vmap.cacheEntry].mapping = v;
 	}
+
+	forwardOrder[backwardOrder[u]] = v;
+	forwardOrder[backwardOrder[v]] = u;
+	swap(backwardOrder[u], backwardOrder[v]);
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
@@ -799,6 +814,16 @@ inline fvector* CachedKernelEvaluator<Kernel, Matrix, Strategy>::getAlphas() {
 template<typename Kernel, typename Matrix, typename Strategy>
 inline fvector* CachedKernelEvaluator<Kernel, Matrix, Strategy>::getBuffer() {
 	return &fbufferView.vector;
+}
+
+template<typename Kernel, typename Matrix, typename Strategy>
+sample_id* CachedKernelEvaluator<Kernel, Matrix, Strategy>::getBackwardOrder() {
+	return backwardOrder;
+}
+
+template<typename Kernel, typename Matrix, typename Strategy>
+sample_id* CachedKernelEvaluator<Kernel, Matrix, Strategy>::getForwardOrder() {
+	return forwardOrder;
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
