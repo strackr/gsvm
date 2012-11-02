@@ -31,7 +31,7 @@ struct PairValueComparator {
 };
 
 
-class PairwiseTrainingResult {
+struct PairwiseTrainingResult {
 
 	pair<label_id, label_id> labels;
 	vector<fvalue> alphas;
@@ -39,14 +39,14 @@ class PairwiseTrainingResult {
 	vector<sample_id> samples;
 	quantity size;
 
-public:
-
 	PairwiseTrainingResult(const pair<label_id, label_id>& labels, quantity size) :
 			labels(labels),
-			alphas(vector<fvalue>(size, 0.0)),
+			alphas(vector<fvalue>()),
 			bias(0),
-			samples(vector<sample_id>(size, 0)),
-			size(size) {
+			samples(vector<sample_id>()),
+			size(0) {
+		alphas.reserve(size);
+		samples.reserve(size);
 	}
 
 	void clear() {
@@ -55,21 +55,6 @@ public:
 		samples.clear();
 	}
 
-	fvalue getBias() const {
-		return bias;
-	}
-
-	pair<label_id, label_id> getLabels() const {
-		return labels;
-	}
-
-	const vector<sample_id>& getSamples() const {
-		return samples;
-	}
-
-	quantity getSize() const {
-		return size;
-	}
 };
 
 
@@ -134,13 +119,24 @@ CrossClassifier<Kernel, Matrix>* PairwiseSolver<Kernel, Matrix, Strategy>::getCl
 
 template<typename Kernel, typename Matrix, typename Strategy>
 void PairwiseSolver<Kernel, Matrix, Strategy>::train() {
-	// XXX do pairwise training
 	vector<PairwiseTrainingResult>::iterator it;
 	for (it = trainings.begin(); it != trainings.end(); it++) {
-		pair<label_id, label_id> trainingPair = it->getLabels();
+		pair<label_id, label_id> trainingPair = it->labels;
 		sortLabels(this->labels, this->currentSize, trainingPair);
 		this->trainForCache(this->cache);
-		// TODO save results
+
+		fvalue* resultAlphas = it->alphas.data();
+		fvalue* cacheAlphas = this->cache->getAlphas()->data;
+		fvalue bias = 0;
+		quantity svNumber  = this->cache->getSVNumber();
+		for (quantity i = 0; i < svNumber; i++) {
+			fvalue alpha = cacheAlphas[i];
+			resultAlphas[i] = alpha;
+			bias += alpha * (this->labels[i] == trainingPair.first ? 1.0 : -1.0);
+		}
+		it->bias = bias;
+		it->size = svNumber;
+		// TODO save samples
 	}
 }
 
