@@ -24,25 +24,61 @@
 template<typename K, typename V>
 struct PairValueComparator {
 
-  bool operator() (pair<K, V> pair1, pair<K, V> pair2);
+	bool operator()(pair<K, V> pair1, pair<K, V> pair2) {
+		return pair1.second > pair2.second;
+	}
 
 };
 
-template<typename K, typename V>
-bool PairValueComparator<K, V>::operator() (pair<K, V> pair1, pair<K, V> pair2) {
-	return pair1.second < pair2.second;
-}
+
+class PairwiseTrainingResult {
+
+	pair<label_id, label_id> labels;
+	vector<fvalue> alphas;
+	fvalue bias;
+	vector<sample_id> samples;
+	quantity size;
+
+public:
+
+	PairwiseTrainingResult(const pair<label_id, label_id>& labels, quantity size) :
+			labels(labels),
+			alphas(vector<fvalue>(size, 0.0)),
+			bias(0),
+			samples(vector<sample_id>(size, 0)),
+			size(size) {
+	}
+
+	void clear() {
+		alphas.clear();
+		bias = 0;
+		samples.clear();
+	}
+
+	fvalue getBias() const {
+		return bias;
+	}
+
+	pair<label_id, label_id> getLabels() const {
+		return labels;
+	}
+
+	const vector<sample_id>& getSamples() const {
+		return samples;
+	}
+
+	quantity getSize() const {
+		return size;
+	}
+};
 
 
 template<typename Kernel, typename Matrix, typename Strategy>
 class PairwiseSolver: public AbstractSolver<Kernel, Matrix, Strategy> {
 
-	label_id maxLabel;
-	quantity* labelSizes;
-	label_id* labelOrder;
+	vector<PairwiseTrainingResult> trainings;
 
-	void sortLabels(label_id *labels, quantity size,
-			label_id first, label_id second);
+	void sortLabels(label_id *sampleLabels, quantity size, pair<label_id, label_id>& labels);
 
 public:
 	PairwiseSolver(map<label_id, string> labelNames, Matrix *samples,
@@ -60,32 +96,34 @@ PairwiseSolver<Kernel, Matrix, Strategy>::PairwiseSolver(
 		map<label_id, string> labelNames, Matrix *samples,
 		label_id *labels, TrainParams &params,
 		StopCriterionStrategy *stopStrategy) :
-		AbstractSolver<Kernel, Matrix, Strategy>(labelNames, samples, labels, params, stopStrategy) {
-	maxLabel = labelNames.size();
-	labelSizes = new quantity[maxLabel];
-	labelOrder = new label_id[maxLabel];
-	for (label_id label = 0; label < maxLabel; label++) {
-		labelSizes[label] = 0;
-	}
+		AbstractSolver<Kernel, Matrix, Strategy>(labelNames, samples, labels, params, stopStrategy),
+		trainings(vector<PairwiseTrainingResult>()) {
+	label_id maxLabel = labelNames.size();
+	vector<quantity> labelSizes(maxLabel, 0);
 	for (sample_id sample = 0; sample < this->size; sample++) {
 		labelSizes[this->labels[sample]]++;
 	}
+
 	// sort
-	vector<pair<label_id, quantity> > pairs;
+	vector<pair<label_id, quantity> > sizes(maxLabel);
 	for (label_id label = 0; label < maxLabel; label++) {
-		pairs[label] = pair<label_id, quantity>(labelOrder[label], labelSizes[label]);
+		sizes[label] = pair<label_id, quantity>(label, labelSizes[label]);
 	}
-	PairValueComparator<label_id, quantity> comparator;
-	sort(pairs.begin(), pairs.end(), comparator);
-	for (label_id label = 0; label < maxLabel; label++) {
-		labelOrder[label] = pairs[maxLabel - label - 1].first;
+	sort(sizes.begin(), sizes.end(), PairValueComparator<label_id, quantity>());
+
+	vector<pair<label_id, quantity> >::iterator it1;
+	for (it1 = sizes.begin(); it1 < sizes.end(); it1++) {
+		vector<pair<label_id, quantity> >::iterator it2;
+		for (it2 = it1 + 1; it2 < sizes.end(); it2++) {
+			pair<label_id, label_id> labels(it1->first, it2->first);
+			quantity size = it1->second + it2->second;
+			trainings.push_back(PairwiseTrainingResult(labels, size));
+		}
 	}
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
 PairwiseSolver<Kernel, Matrix, Strategy>::~PairwiseSolver() {
-	delete [] labelSizes;
-	delete [] labelOrder;
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
@@ -97,27 +135,27 @@ CrossClassifier<Kernel, Matrix>* PairwiseSolver<Kernel, Matrix, Strategy>::getCl
 template<typename Kernel, typename Matrix, typename Strategy>
 void PairwiseSolver<Kernel, Matrix, Strategy>::train() {
 	// XXX do pairwise training
-	for (label_id i = 0; i < maxLabel; i++) {
-		label_id label1 = labelOrder[i];
-		for (label_id j = i + 1; j < maxLabel; j++) {
-			label_id label2 = labelOrder[j];
-			sortLabels(this->labels, this->currentSize, label1, label2);
-			this->trainForCache(this->cache);
-			// TODO save results
-		}
+	vector<PairwiseTrainingResult>::iterator it;
+	for (it = trainings.begin(); it != trainings.end(); it++) {
+		pair<label_id, label_id> trainingPair = it->getLabels();
+		sortLabels(this->labels, this->currentSize, trainingPair);
+		this->trainForCache(this->cache);
+		// TODO save results
 	}
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
 void PairwiseSolver<Kernel, Matrix, Strategy>::sortLabels(
-		label_id* labels, quantity size, label_id first, label_id second) {
+		label_id *sampleLabels, quantity size, pair<label_id, label_id>& labels) {
+	label_id first = labels.first;
+	label_id second = labels.second;
 	id train = 0;
 	id test = size;
 	while (train < test) {
-		while (labels[train] == first || labels[train] == second) {
+		while (sampleLabels[train] == first || sampleLabels[train] == second) {
 			train++;
 		}
-		while (labels[test] != first && labels[test] != second) {
+		while (sampleLabels[test] != first && sampleLabels[test] != second) {
 			test--;
 		}
 		if (train < test) {
