@@ -98,7 +98,7 @@ public:
 
 	void setKernelParams(fvalue c, Kernel &params);
 	void train();
-	UniversalClassifier<Kernel, Matrix>* getClassifier();
+	Classifier<Kernel, Matrix>* getClassifier();
 
 	TestingResult doCrossValidation();
 	void resetOuterFold(fold_id fold);
@@ -268,7 +268,7 @@ TestingResult CrossValidationSolver<Kernel, Matrix, Strategy>::test(
 		sample_id from, sample_id to) {
 	label_id *labels = solver->getLabels();
 	quantity correct = 0;
-	UniversalClassifier<Kernel, Matrix> *classifier = solver->getClassifier();
+	Classifier<Kernel, Matrix> *classifier = solver->getClassifier();
 	for (sample_id test = from; test < to; test++) {
 		label_id label = classifier->classify(test);
 		if (label == labels[test]) {
@@ -377,7 +377,7 @@ inline void CrossValidationSolver<Kernel, Matrix, Strategy>::train() {
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-inline UniversalClassifier<Kernel, Matrix>* CrossValidationSolver<Kernel, Matrix, Strategy>::getClassifier() {
+inline Classifier<Kernel, Matrix>* CrossValidationSolver<Kernel, Matrix, Strategy>::getClassifier() {
 	return solver->getClassifier();
 }
 

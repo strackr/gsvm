@@ -31,7 +31,7 @@ public:
 	virtual ~UniversalSolver();
 
 	void train();
-	UniversalClassifier<Kernel, Matrix>* getClassifier();
+	Classifier<Kernel, Matrix>* getClassifier();
 
 };
 
@@ -48,7 +48,7 @@ UniversalSolver<Kernel, Matrix, Strategy>::~UniversalSolver() {
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-UniversalClassifier<Kernel, Matrix>* UniversalSolver<Kernel, Matrix, Strategy>::getClassifier() {
+Classifier<Kernel, Matrix>* UniversalSolver<Kernel, Matrix, Strategy>::getClassifier() {
 	return this->buildClassifier();
 }
 

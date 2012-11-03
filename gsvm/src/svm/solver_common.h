@@ -59,7 +59,7 @@ public:
 
 	virtual void setKernelParams(fvalue c, Kernel &params) = 0;
 	virtual void train() = 0;
-	virtual UniversalClassifier<Kernel, Matrix>* getClassifier() = 0;
+	virtual Classifier<Kernel, Matrix>* getClassifier() = 0;
 
 };
 
@@ -128,7 +128,7 @@ protected:
 
 	CachedKernelEvaluator<Kernel, Matrix, Strategy>* buildCache(
 			fvalue c, Kernel &gparams);
-	UniversalClassifier<Kernel, Matrix>* buildClassifier();
+	Classifier<Kernel, Matrix>* buildClassifier();
 
 	void trainForCache(CachedKernelEvaluator<Kernel, Matrix, Strategy> *cache);
 
@@ -142,7 +142,7 @@ public:
 
 	void setKernelParams(fvalue c, Kernel &params);
 	virtual void train() = 0;
-	UniversalClassifier<Kernel, Matrix>* getClassifier();
+	Classifier<Kernel, Matrix>* getClassifier();
 
 	void setSwapListener(SwapListener *listener);
 	void swapSamples(sample_id u, sample_id v);
@@ -227,7 +227,7 @@ void AbstractSolver<Kernel, Matrix, Strategy>::reportStatistics() {
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-UniversalClassifier<Kernel, Matrix>* AbstractSolver<Kernel, Matrix, Strategy>::getClassifier() {
+Classifier<Kernel, Matrix>* AbstractSolver<Kernel, Matrix, Strategy>::getClassifier() {
 	return buildClassifier();
 }
 
@@ -288,7 +288,7 @@ CachedKernelEvaluator<Kernel, Matrix, Strategy>* AbstractSolver<Kernel, Matrix, 
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-UniversalClassifier<Kernel, Matrix>* AbstractSolver<Kernel, Matrix, Strategy>::buildClassifier() {
+Classifier<Kernel, Matrix>* AbstractSolver<Kernel, Matrix, Strategy>::buildClassifier() {
 	fvector *buffer = cache->getBuffer();
 	buffer->size = cache->getSVNumber();
 	return new UniversalClassifier<Kernel, Matrix>(cache->getEvaluator(),
