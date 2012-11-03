@@ -23,8 +23,21 @@
 
 #include <map>
 
+
 template<typename Kernel, typename Matrix>
-class CrossClassifier {
+class Classifier {
+
+public:
+	virtual label_id classify(sample_id sample) = 0;
+	virtual quantity getSvNumber() = 0;
+
+	virtual ~Classifier() {};
+
+};
+
+
+template<typename Kernel, typename Matrix>
+class UniversalClassifier: public Classifier<Kernel, Matrix> {
 	RbfKernelEvaluator<Kernel, Matrix> *evaluator;
 
 	fvector *alphas;
@@ -37,10 +50,10 @@ class CrossClassifier {
 	quantity svNumber;
 
 public:
-	CrossClassifier(RbfKernelEvaluator<Kernel, Matrix> *evaluator,
+	UniversalClassifier(RbfKernelEvaluator<Kernel, Matrix> *evaluator,
 			fvector *alphas, label_id *labels, fvector *kernelBuffer,
 			quantity labelNumber, quantity svNumber);
-	~CrossClassifier();
+	virtual ~UniversalClassifier();
 
 	label_id classify(sample_id sample);
 
@@ -49,7 +62,7 @@ public:
 };
 
 template<typename Kernel, typename Matrix>
-CrossClassifier<Kernel, Matrix>::CrossClassifier(
+UniversalClassifier<Kernel, Matrix>::UniversalClassifier(
 		RbfKernelEvaluator<Kernel, Matrix> *evaluator,
 		fvector *alphas, label_id *labels, fvector *kernelBuffer,
 		quantity labelNumber, quantity svNumber) :
@@ -75,13 +88,13 @@ CrossClassifier<Kernel, Matrix>::CrossClassifier(
 }
 
 template<typename Kernel, typename Matrix>
-CrossClassifier<Kernel, Matrix>::~CrossClassifier() {
+UniversalClassifier<Kernel, Matrix>::~UniversalClassifier() {
 	fvector_free(labelBuffer);
 	fvector_free(biasBuffer);
 }
 
 template<typename Kernel, typename Matrix>
-label_id CrossClassifier<Kernel, Matrix>::classify(sample_id sample) {
+label_id UniversalClassifier<Kernel, Matrix>::classify(sample_id sample) {
 	evaluator->evalInnerKernel(sample, 0, svNumber, kernelBuffer);
 	fvector_mul(kernelBuffer, alphas);
 
@@ -103,7 +116,7 @@ label_id CrossClassifier<Kernel, Matrix>::classify(sample_id sample) {
 }
 
 template<typename Kernel, typename Matrix>
-quantity CrossClassifier<Kernel, Matrix>::getSvNumber() {
+quantity UniversalClassifier<Kernel, Matrix>::getSvNumber() {
 	return svNumber;
 }
 

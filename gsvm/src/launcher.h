@@ -175,7 +175,7 @@ void ApplicationLauncher::performTraining() {
 	GaussKernel param(conf.searchRange.gammaLow);
 	solver->setKernelParams(conf.searchRange.cLow, param);
 	solver->train();
-	CrossClassifier<GaussKernel, Matrix>* classifier = solver->getClassifier();
+	UniversalClassifier<GaussKernel, Matrix>* classifier = solver->getClassifier();
 	timer.stop();
 
 	Matrix *samples = solver->getSamples();

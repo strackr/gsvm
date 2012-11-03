@@ -72,7 +72,7 @@ public:
 	virtual ~PairwiseSolver();
 
 	void train();
-	CrossClassifier<Kernel, Matrix>* getClassifier();
+	UniversalClassifier<Kernel, Matrix>* getClassifier();
 
 };
 
@@ -112,7 +112,7 @@ PairwiseSolver<Kernel, Matrix, Strategy>::~PairwiseSolver() {
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-CrossClassifier<Kernel, Matrix>* PairwiseSolver<Kernel, Matrix, Strategy>::getClassifier() {
+UniversalClassifier<Kernel, Matrix>* PairwiseSolver<Kernel, Matrix, Strategy>::getClassifier() {
 	// XXX create pairwise classifier
 	return this->buildClassifier();
 }
