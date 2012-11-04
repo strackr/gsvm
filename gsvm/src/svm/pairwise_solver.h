@@ -95,7 +95,12 @@ label_id PairwiseClassifier<Kernel, Matrix>::classify(sample_id sample) {
 
 template<typename Kernel, typename Matrix>
 quantity PairwiseClassifier<Kernel, Matrix>::getSvNumber() {
-	// TODO
+	quantity sum = 0;
+	vector<PairwiseTrainingResult>::iterator it;
+	for (it = state->models.begin(); it != state->models.end(); it++) {
+		sum += it->size;
+	}
+	return sum;
 }
 
 
