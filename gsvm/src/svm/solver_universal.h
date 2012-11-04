@@ -19,7 +19,7 @@
 #ifndef SOLVER_UNIVERSAL_H_
 #define SOLVER_UNIVERSAL_H_
 
-#include "solver_common.h"
+#include "solver.h"
 
 template<typename Kernel, typename Matrix, typename Strategy>
 class UniversalSolver: public AbstractSolver<Kernel, Matrix, Strategy> {

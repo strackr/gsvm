@@ -19,7 +19,7 @@
 #ifndef SOLVER_PAIRWISE_H_
 #define SOLVER_PAIRWISE_H_
 
-#include "solver_common.h"
+#include "solver.h"
 
 template<typename K, typename V>
 struct PairValueComparator {
