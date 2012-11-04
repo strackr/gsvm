@@ -21,15 +21,6 @@
 
 #include "solver.h"
 
-template<typename K, typename V>
-struct PairValueComparator {
-
-	bool operator()(pair<K, V> pair1, pair<K, V> pair2) {
-		return pair1.second > pair2.second;
-	}
-
-};
-
 
 struct PairwiseTrainingResult {
 
@@ -58,11 +49,26 @@ struct PairwiseTrainingResult {
 };
 
 
+struct PairwiseTrainingState {
+
+	vector<PairwiseTrainingResult> models;
+
+};
+
+
+/**
+ * Pairwise classifier perform classification based on SVM models created by
+ * pairwise solver.
+ */
 template<typename Kernel, typename Matrix>
 class PairwiseClassifier: public Classifier<Kernel, Matrix> {
-	RbfKernelEvaluator<Kernel, Matrix> *evaluator;
+	RbfKernelEvaluator<Kernel, Matrix>* evaluator;
+
+	PairwiseTrainingState* state;
 
 public:
+	PairwiseClassifier(RbfKernelEvaluator<Kernel, Matrix> *evaluator,
+			PairwiseTrainingState* state);
 	virtual ~PairwiseClassifier();
 
 	virtual label_id classify(sample_id sample);
@@ -71,22 +77,45 @@ public:
 };
 
 template<typename Kernel, typename Matrix>
-inline PairwiseClassifier<Kernel, Matrix>::~PairwiseClassifier() {
+PairwiseClassifier<Kernel, Matrix>::PairwiseClassifier(
+		RbfKernelEvaluator<Kernel, Matrix> *evaluator,
+		PairwiseTrainingState* state) :
+		evaluator(evaluator),
+		state(state) {
 }
 
 template<typename Kernel, typename Matrix>
-inline label_id PairwiseClassifier<Kernel, Matrix>::classify(sample_id sample) {
+PairwiseClassifier<Kernel, Matrix>::~PairwiseClassifier() {
 }
 
 template<typename Kernel, typename Matrix>
-inline quantity PairwiseClassifier<Kernel, Matrix>::getSvNumber() {
+label_id PairwiseClassifier<Kernel, Matrix>::classify(sample_id sample) {
+	// TODO
+}
+
+template<typename Kernel, typename Matrix>
+quantity PairwiseClassifier<Kernel, Matrix>::getSvNumber() {
+	// TODO
 }
 
 
+/**
+ * Pairwise solver performs SVM training by generating SVM state for all
+ * two-element combinations of the class labels.
+ */
 template<typename Kernel, typename Matrix, typename Strategy>
 class PairwiseSolver: public AbstractSolver<Kernel, Matrix, Strategy> {
 
-	vector<PairwiseTrainingResult> trainings;
+	template<typename K, typename V>
+	struct PairValueComparator {
+
+		bool operator()(pair<K, V> pair1, pair<K, V> pair2) {
+			return pair1.second > pair2.second;
+		}
+
+	};
+
+	PairwiseTrainingState state;
 
 	void sortLabels(label_id *sampleLabels, quantity size, pair<label_id, label_id>& labels);
 
@@ -101,13 +130,14 @@ public:
 
 };
 
+
 template<typename Kernel, typename Matrix, typename Strategy>
 PairwiseSolver<Kernel, Matrix, Strategy>::PairwiseSolver(
 		map<label_id, string> labelNames, Matrix *samples,
 		label_id *labels, TrainParams &params,
 		StopCriterionStrategy *stopStrategy) :
 		AbstractSolver<Kernel, Matrix, Strategy>(labelNames, samples, labels, params, stopStrategy),
-		trainings(vector<PairwiseTrainingResult>()) {
+		state(PairwiseTrainingState()) {
 	label_id maxLabel = labelNames.size();
 	vector<quantity> labelSizes(maxLabel, 0);
 	for (sample_id sample = 0; sample < this->size; sample++) {
@@ -127,7 +157,7 @@ PairwiseSolver<Kernel, Matrix, Strategy>::PairwiseSolver(
 		for (it2 = it1 + 1; it2 < sizes.end(); it2++) {
 			pair<label_id, label_id> labels(it1->first, it2->first);
 			quantity size = it1->second + it2->second;
-			trainings.push_back(PairwiseTrainingResult(labels, size));
+			state.models.push_back(PairwiseTrainingResult(labels, size));
 		}
 	}
 }
@@ -138,14 +168,13 @@ PairwiseSolver<Kernel, Matrix, Strategy>::~PairwiseSolver() {
 
 template<typename Kernel, typename Matrix, typename Strategy>
 Classifier<Kernel, Matrix>* PairwiseSolver<Kernel, Matrix, Strategy>::getClassifier() {
-	// XXX create pairwise classifier
-	return NULL;
+	return new PairwiseClassifier<Kernel, Matrix>(this->cache->getEvaluator(), &state);
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
 void PairwiseSolver<Kernel, Matrix, Strategy>::train() {
 	vector<PairwiseTrainingResult>::iterator it;
-	for (it = trainings.begin(); it != trainings.end(); it++) {
+	for (it = state.models.begin(); it != state.models.end(); it++) {
 		pair<label_id, label_id> trainingPair = it->labels;
 		sortLabels(this->labels, this->currentSize, trainingPair);
 		this->trainForCache(this->cache);
