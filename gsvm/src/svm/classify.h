@@ -24,10 +24,10 @@ template<typename Kernel, typename Matrix>
 class Classifier {
 
 public:
+	virtual ~Classifier() {};
+
 	virtual label_id classify(sample_id sample) = 0;
 	virtual quantity getSvNumber() = 0;
-
-	virtual ~Classifier() {};
 
 };
 

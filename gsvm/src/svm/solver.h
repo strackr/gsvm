@@ -26,8 +26,7 @@
 #include <vector>
 
 #include "kernel.h"
-#include "classify_universal.h"
-#include "classify_pairwise.h"
+#include "classify.h"
 #include "cache.h"
 #include "stop.h"
 #include "params.h"
@@ -129,7 +128,6 @@ protected:
 
 	CachedKernelEvaluator<Kernel, Matrix, Strategy>* buildCache(
 			fvalue c, Kernel &gparams);
-	Classifier<Kernel, Matrix>* buildClassifier();
 
 	void trainForCache(CachedKernelEvaluator<Kernel, Matrix, Strategy> *cache);
 
@@ -143,7 +141,7 @@ public:
 
 	void setKernelParams(fvalue c, Kernel &params);
 	virtual void train() = 0;
-	Classifier<Kernel, Matrix>* getClassifier();
+	Classifier<Kernel, Matrix>* getClassifier() = 0;
 
 	void setSwapListener(SwapListener *listener);
 	void swapSamples(sample_id u, sample_id v);
@@ -228,11 +226,6 @@ void AbstractSolver<Kernel, Matrix, Strategy>::reportStatistics() {
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-Classifier<Kernel, Matrix>* AbstractSolver<Kernel, Matrix, Strategy>::getClassifier() {
-	return buildClassifier();
-}
-
-template<typename Kernel, typename Matrix, typename Strategy>
 void AbstractSolver<Kernel, Matrix, Strategy>::trainForCache(
 		CachedKernelEvaluator<Kernel, Matrix, Strategy> *cache) {
 	sample_id mnviol = INVALID_ID;
@@ -286,15 +279,6 @@ CachedKernelEvaluator<Kernel, Matrix, Strategy>* AbstractSolver<Kernel, Matrix, 
 			this->samples, this->labels, labelNames.size(), c, gparams);
 	return new CachedKernelEvaluator<GaussKernel, Matrix, Strategy>(
 			rbf, &strategy, size, DEFAULT_CACHE_SIZE);
-}
-
-template<typename Kernel, typename Matrix, typename Strategy>
-Classifier<Kernel, Matrix>* AbstractSolver<Kernel, Matrix, Strategy>::buildClassifier() {
-	fvector *buffer = cache->getBuffer();
-	buffer->size = cache->getSVNumber();
-	return new UniversalClassifier<Kernel, Matrix>(cache->getEvaluator(),
-			cache->getAlphas(), labels, buffer, labelNames.size(),
-			cache->getSVNumber());
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>

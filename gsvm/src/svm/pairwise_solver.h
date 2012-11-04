@@ -58,6 +58,31 @@ struct PairwiseTrainingResult {
 };
 
 
+template<typename Kernel, typename Matrix>
+class PairwiseClassifier: public Classifier<Kernel, Matrix> {
+	RbfKernelEvaluator<Kernel, Matrix> *evaluator;
+
+public:
+	virtual ~PairwiseClassifier();
+
+	virtual label_id classify(sample_id sample);
+	virtual quantity getSvNumber();
+
+};
+
+template<typename Kernel, typename Matrix>
+inline PairwiseClassifier<Kernel, Matrix>::~PairwiseClassifier() {
+}
+
+template<typename Kernel, typename Matrix>
+inline label_id PairwiseClassifier<Kernel, Matrix>::classify(sample_id sample) {
+}
+
+template<typename Kernel, typename Matrix>
+inline quantity PairwiseClassifier<Kernel, Matrix>::getSvNumber() {
+}
+
+
 template<typename Kernel, typename Matrix, typename Strategy>
 class PairwiseSolver: public AbstractSolver<Kernel, Matrix, Strategy> {
 
@@ -114,7 +139,7 @@ PairwiseSolver<Kernel, Matrix, Strategy>::~PairwiseSolver() {
 template<typename Kernel, typename Matrix, typename Strategy>
 Classifier<Kernel, Matrix>* PairwiseSolver<Kernel, Matrix, Strategy>::getClassifier() {
 	// XXX create pairwise classifier
-	return this->buildClassifier();
+	return NULL;
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>

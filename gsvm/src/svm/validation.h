@@ -19,8 +19,8 @@
 #ifndef CV_H_
 #define CV_H_
 
-#include "solver_universal.h"
-#include "solver_pairwise.h"
+#include "universal_solver.h"
+#include "pairwise_solver.h"
 #include "../time/timer.h"
 #include "../logging/log.h"
 #include "../math/random.h"

@@ -16,11 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  **************************************************************************/
 
-#ifndef CLASSIFY_UNIVERSAL_H_
-#define CLASSIFY_UNIVERSAL_H_
+#ifndef SOLVER_UNIVERSAL_H_
+#define SOLVER_UNIVERSAL_H_
 
-#include "kernel.h"
-#include "classify.h"
+#include "solver.h"
 
 #include <map>
 
@@ -107,6 +106,47 @@ label_id UniversalClassifier<Kernel, Matrix>::classify(sample_id sample) {
 template<typename Kernel, typename Matrix>
 quantity UniversalClassifier<Kernel, Matrix>::getSvNumber() {
 	return svNumber;
+}
+
+
+template<typename Kernel, typename Matrix, typename Strategy>
+class UniversalSolver: public AbstractSolver<Kernel, Matrix, Strategy> {
+
+public:
+	UniversalSolver(map<label_id, string> labelNames, Matrix *samples,
+			label_id *labels, TrainParams &params,
+			StopCriterionStrategy *stopStrategy);
+	virtual ~UniversalSolver();
+
+	void train();
+	Classifier<Kernel, Matrix>* getClassifier();
+
+};
+
+template<typename Kernel, typename Matrix, typename Strategy>
+UniversalSolver<Kernel, Matrix, Strategy>::UniversalSolver(
+		map<label_id, string> labelNames, Matrix *samples,
+		label_id *labels, TrainParams &params,
+		StopCriterionStrategy *stopStrategy) :
+		AbstractSolver<Kernel, Matrix, Strategy>(labelNames, samples, labels, params, stopStrategy) {
+}
+
+template<typename Kernel, typename Matrix, typename Strategy>
+UniversalSolver<Kernel, Matrix, Strategy>::~UniversalSolver() {
+}
+
+template<typename Kernel, typename Matrix, typename Strategy>
+Classifier<Kernel, Matrix>* UniversalSolver<Kernel, Matrix, Strategy>::getClassifier() {
+	fvector *buffer = this->cache->getBuffer();
+	buffer->size = this->cache->getSVNumber();
+	return new UniversalClassifier<Kernel, Matrix>(this->cache->getEvaluator(),
+			this->cache->getAlphas(), this->labels, buffer, this->labelNames.size(),
+			this->cache->getSVNumber());
+}
+
+template<typename Kernel, typename Matrix, typename Strategy>
+void UniversalSolver<Kernel, Matrix, Strategy>::train() {
+	this->trainForCache(this->cache);
 }
 
 #endif

@@ -31,8 +31,8 @@
 #include <vector>
 
 #include "../logging/log.h"
-#include "../svm/solver_universal.h"
-#include "../svm/solver_pairwise.h"
+#include "../svm/universal_solver.h"
+#include "../svm/pairwise_solver.h"
 #include "../svm/validation.h"
 #include "../feature/feature.h"
 
