@@ -42,13 +42,13 @@ public:
 	fvectorv bufferView;
 	fvectorv x2View;
 
-	fvalue *matrixData;
+	fvalue* matrixData;
 	size_t matrixTda;
 
-	sample_id *forwardMap;
-	sample_id *reverseMap;
+	sample_id* forwardMap;
+	sample_id* reverseMap;
 
-	EvaluatorWorkspace(dfmatrix *matrix);
+	EvaluatorWorkspace(dfmatrix* matrix);
 	~EvaluatorWorkspace();
 
 };
@@ -57,9 +57,9 @@ public:
 template<>
 class EvaluatorWorkspace<sfmatrix> {
 public:
-	fvalue *buffer;
+	fvalue* buffer;
 
-	EvaluatorWorkspace(sfmatrix *matrix);
+	EvaluatorWorkspace(sfmatrix* matrix);
 	~EvaluatorWorkspace();
 
 };
@@ -69,23 +69,26 @@ public:
 template<typename Matrix>
 class MatrixEvaluator {
 
-	Matrix *matrix;
-	fvalue *x2;
+	Matrix* matrix;
+	fvalue* x2;
 	EvaluatorWorkspace<Matrix> workspace;
 
 protected:
-	quantity size(Matrix *matrix);
-	quantity dim(Matrix *matrix);
+	quantity size(Matrix* matrix);
+	quantity dim(Matrix* matrix);
 
 	fvalue norm2(sample_id v);
 
 public:
-	MatrixEvaluator(Matrix *matrix);
+	MatrixEvaluator(Matrix* matrix);
 	~MatrixEvaluator();
 
 	fvalue dot(sample_id u, sample_id v);
 
-	void dist(sample_id id, sample_id rangeFrom, sample_id rangeTo, fvector *buffer);
+	void dist(sample_id id, sample_id rangeFrom, sample_id rangeTo,
+			fvector* buffer);
+	void dist(sample_id id, sample_id rangeFrom, sample_id rangeTo,
+			sample_id* mappings, fvector* buffer);
 	fvalue dist(sample_id u, sample_id v);
 
 	void swapSamples(sample_id u, sample_id v);
@@ -93,7 +96,7 @@ public:
 };
 
 template<typename Matrix>
-MatrixEvaluator<Matrix>::MatrixEvaluator(Matrix *matrix) :
+MatrixEvaluator<Matrix>::MatrixEvaluator(Matrix* matrix) :
 		matrix(matrix),
 		workspace(matrix) {
 	quantity length = size(matrix);
@@ -109,17 +112,26 @@ MatrixEvaluator<Matrix>::~MatrixEvaluator() {
 }
 
 template<typename Matrix>
+void MatrixEvaluator<Matrix>::dist(sample_id id, sample_id rangeFrom, sample_id rangeTo,
+		sample_id* mappings, fvector* buffer) {
+	fvalue* data = buffer->data;
+	for (sample_id i = rangeFrom; i < rangeTo; i++) {
+		data[i] = dot(mappings[i], id);
+	}
+}
+
+template<typename Matrix>
 fvalue MatrixEvaluator<Matrix>::dist(sample_id u, sample_id v) {
 	return x2[u] + x2[v] - 2 * dot(u, v);
 }
 
 template<typename Matrix>
-inline quantity MatrixEvaluator<Matrix>::size(Matrix *matrix) {
+inline quantity MatrixEvaluator<Matrix>::size(Matrix* matrix) {
 	return matrix->height;
 }
 
 template<typename Matrix>
-inline quantity MatrixEvaluator<Matrix>::dim(Matrix *matrix) {
+inline quantity MatrixEvaluator<Matrix>::dim(Matrix* matrix) {
 	return matrix->width;
 }
 

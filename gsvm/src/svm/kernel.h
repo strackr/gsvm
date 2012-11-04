@@ -43,8 +43,8 @@ template<class Kernel, class Matrix>
 class RbfKernelEvaluator {
 
 private:
-	Matrix *samples;
-	label_id *labels;
+	Matrix* samples;
+	label_id* labels;
 	fvalue c;
 
 	fvalue yyNeg;
@@ -59,14 +59,17 @@ protected:
 	fvalue rbf(fvalue dist2);
 
 public:
-	RbfKernelEvaluator(Matrix *samples, label_id *labels, quantity classNumber, fvalue c, Kernel &params);
+	RbfKernelEvaluator(Matrix* samples, label_id* labels, quantity classNumber, fvalue c, Kernel &params);
 	~RbfKernelEvaluator();
 
 	fvalue evalInnerKernel(sample_id uid, sample_id vid);
-	void evalInnerKernel(sample_id id, sample_id rangeFrom, sample_id rangeTo, fvector *result);
+	void evalInnerKernel(sample_id id, sample_id rangeFrom,
+			sample_id rangeTo, fvector* result);
+	void evalInnerKernel(sample_id id, sample_id rangeFrom,
+			sample_id rangeTo, sample_id* mappings, fvector* result);
 
 	fvalue evalKernel(sample_id uid, sample_id vid);
-	void evalKernel(sample_id id, sample_id rangeFrom, sample_id rangeTo, fvector *result);
+	void evalKernel(sample_id id, sample_id rangeFrom, sample_id rangeTo, fvector* result);
 	fvalue getKernelTau();
 
 	void swapSamples(sample_id uid, sample_id vid);
@@ -79,7 +82,7 @@ public:
 
 template<class Kernel, class Matrix>
 RbfKernelEvaluator<Kernel, Matrix>::RbfKernelEvaluator(
-		Matrix *samples, label_id *labels, quantity classNumber,
+		Matrix* samples, label_id* labels, quantity classNumber,
 		fvalue c, Kernel &params) :
 		samples(samples),
 		labels(labels),
@@ -108,10 +111,22 @@ inline fvalue RbfKernelEvaluator<Kernel, Matrix>::evalInnerKernel(
 
 template<class Kernel, class Matrix>
 void RbfKernelEvaluator<Kernel, Matrix>::evalInnerKernel(sample_id id,
-		sample_id rangeFrom, sample_id rangeTo, fvector *result) {
+		sample_id rangeFrom, sample_id rangeTo, fvector* result) {
 	eval.dist(id, rangeFrom, rangeTo, result);
 
-	fvalue *ptr = fvector_ptr(result);
+	fvalue* ptr = fvector_ptr(result);
+	for (sample_id iid = rangeFrom; iid < rangeTo; iid++) {
+		ptr[iid] = rbf(ptr[iid]);
+	}
+}
+
+template<class Kernel, class Matrix>
+void RbfKernelEvaluator<Kernel, Matrix>::evalInnerKernel(sample_id id,
+		sample_id rangeFrom, sample_id rangeTo,
+		sample_id* mappings, fvector* result) {
+	eval.dist(id, rangeFrom, rangeTo, mappings, result);
+
+	fvalue* ptr = fvector_ptr(result);
 	for (sample_id iid = rangeFrom; iid < rangeTo; iid++) {
 		ptr[iid] = rbf(ptr[iid]);
 	}
@@ -137,11 +152,11 @@ fvalue RbfKernelEvaluator<Kernel, Matrix>::evalKernel(
 
 template<class Kernel, class Matrix>
 void RbfKernelEvaluator<Kernel, Matrix>::evalKernel(sample_id id,
-		sample_id rangeFrom, sample_id rangeTo, fvector *result) {
+		sample_id rangeFrom, sample_id rangeTo, fvector* result) {
 	eval.dist(id, rangeFrom, rangeTo, result);
 
-	fvalue *rptr = fvector_ptr(result);
-	label_id *lptr = labels;
+	fvalue* rptr = fvector_ptr(result);
+	label_id* lptr = labels;
 	label_id label = lptr[id];
 	for (sample_id iid = rangeFrom; iid < rangeTo; iid++) {
 		fvalue yy = lptr[iid] == label ? 1.0 : yyNeg;
