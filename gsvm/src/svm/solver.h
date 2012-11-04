@@ -26,7 +26,8 @@
 #include <vector>
 
 #include "kernel.h"
-#include "classify.h"
+#include "classify_universal.h"
+#include "classify_pairwise.h"
 #include "cache.h"
 #include "stop.h"
 #include "params.h"

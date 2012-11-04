@@ -16,18 +16,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  **************************************************************************/
 
-#ifndef CLASSIFY_H_
-#define CLASSIFY_H_
+#ifndef CLASSIFY_PAIRWISE_H_
+#define CLASSIFY_PAIRWISE_H_
+
+#include "kernel.h"
+#include "classify.h"
+
+#include <map>
 
 
 template<typename Kernel, typename Matrix>
-class Classifier {
-
-public:
-	virtual label_id classify(sample_id sample) = 0;
-	virtual quantity getSvNumber() = 0;
-
-	virtual ~Classifier() {};
+class PairwiseClassifier: public Classifier<Kernel, Matrix> {
+	RbfKernelEvaluator<Kernel, Matrix> *evaluator;
 
 };
 
