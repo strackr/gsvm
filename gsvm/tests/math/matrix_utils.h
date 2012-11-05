@@ -16,30 +16,45 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  **************************************************************************/
 
-#include <gtest/gtest.h>
+#ifndef MATRIX_UTILS_H_
+#define MATRIX_UTILS_H_
 
-#include "../../src/math/matrix.h"
+#include <iostream>
+#include <iomanip>
+#include <fstream>
+#include <sstream>
+#include <string>
 
+#include <set>
+#include <map>
+#include <list>
+#include <vector>
+
+#include <algorithm>
+
+#include "../../src/math/numeric.h"
 #include "../../src/io/dataset.h"
 #include "../../src/io/solver_factory.h"
 
-TEST(SparseMatrixSuite, shouldEvaluateDotProductForOneSample) {
-	// given
-	list<map<feature_id, fvalue> > samples;
-	map<feature_id, fvalue> sample;
-	sample[0] = 0.5;
-	samples.push_back(sample);
+template<typename Matrix>
+class SimpleMatrixFactory {
 
-	map<feature_id, feature_id> mappings;
-	mappings[0] = 0;
+public:
+	Matrix* create(string& desc);
 
-	FeatureMatrixBuilder<sfmatrix> builder;
-	sfmatrix* matrix = builder.getFeatureMatrix(samples, mappings);
-	MatrixEvaluator<sfmatrix> evaluator(matrix);
+};
 
-	// when
-	fvalue dot = evaluator.dot(0, 0);
-
-	// then
-	ASSERT_DOUBLE_EQ(0.25, dot);
+template<typename Matrix>
+Matrix* SimpleMatrixFactory<Matrix>::create(string& desc) {
+	istringstream stream(desc);
+	SparseFormatDataSetFactory factory(stream);
+	DataSet dataSet = factory.createDataSet();
+	FeatureMatrixBuilder<Matrix> matrixBuilder;
+	map<feature_id, feature_id> identity;
+	for (feature_id fid = 0; fid < dataSet.labelNames.size(); fid++) {
+		identity[fid] = fid;
+	}
+	return matrixBuilder.getFeatureMatrix(dataSet.features, identity);;
 }
+
+#endif
