@@ -1,6 +1,4 @@
-bin_PROGRAMS = gsvm
-gsvm_SOURCES = \
-		src/gsvm.cc \
+SOURCES = \
 		src/configuration.cc \
 		src/launcher.cc \
 		src/math/numeric.cc \
@@ -17,3 +15,13 @@ gsvm_SOURCES = \
 		src/io/data.cc \
 		src/time/timer.cc \
 		src/logging/log.cc
+
+bin_PROGRAMS = gsvm
+gsvm_SOURCES = ${SOURCES} \
+		src/gsvm.cc
+
+TESTS = gsvmcheck
+check_PROGRAMS = gsvmcheck
+gsvmcheck_SOURCES = ${SOURCES} \
+		tests/test.cc \
+		tests/math/sparse_matrix_test.cc

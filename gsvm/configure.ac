@@ -9,6 +9,7 @@ AC_PROG_CXX
 AC_CHECK_LIB(boost_program_options, main, , AC_MSG_ERROR(boost_program_options required but not found))
 AC_CHECK_LIB(gslcblas, main, , AC_MSG_WARN(gslcblas not found))
 AC_CHECK_LIB(gsl, main, , AC_MSG_ERROR(gsl required but not found))
+AC_CHECK_LIB(gtest, main, , AC_MSG_ERROR(gtest required but not found))
 
 AC_CONFIG_FILES(Makefile)
 AC_OUTPUT
