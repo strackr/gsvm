@@ -16,19 +16,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  **************************************************************************/
 
-#include "data.h"
+#include "solver_factory.h"
 
 template<>
 dfmatrix* FeatureMatrixBuilder<dfmatrix>::getFeatureMatrix(
-		list<map<feature_id, fvalue>*>& features,
+		list<map<feature_id, fvalue> >& features,
 		map<feature_id, feature_id>& mappings) {
 	fmatrix *samples = fmatrix_alloc(features.size(), mappings.size());
 	sample_id row = 0;
 
-	list<map<feature_id, fvalue>*>::iterator lit;
+	list<map<feature_id, fvalue> >::iterator lit;
 	for (lit = features.begin(); lit != features.end(); lit++) {
 		map<feature_id, fvalue>::iterator mit;
-		for (mit = (*lit)->begin(); mit != (*lit)->end(); mit++) {
+		for (mit = lit->begin(); mit != lit->end(); mit++) {
 			fmatrix_set(samples, row, mappings[mit->first], mit->second);
 		}
 		row++;
@@ -38,13 +38,13 @@ dfmatrix* FeatureMatrixBuilder<dfmatrix>::getFeatureMatrix(
 
 template<>
 sfmatrix* FeatureMatrixBuilder<sfmatrix>::getFeatureMatrix(
-		list<map<feature_id, fvalue>*>& features,
+		list<map<feature_id, fvalue> >& features,
 		map<feature_id, feature_id>& mappings) {
 	// count total number of features
 	quantity total = 0;
-	list<map<feature_id, fvalue>*>::iterator lit;
+	list<map<feature_id, fvalue> >::iterator lit;
 	for (lit = features.begin(); lit != features.end(); lit++) {
-		total += (*lit)->size();
+		total += lit->size();
 	}
 
 	// initialize storage
@@ -59,7 +59,7 @@ sfmatrix* FeatureMatrixBuilder<sfmatrix>::getFeatureMatrix(
 	for (lit = features.begin(); lit != features.end(); lit++) {
 		offsets[row] = offset;
 		map<feature_id, fvalue>::iterator mit;
-		for (mit = (*lit)->begin(); mit != (*lit)->end(); mit++) {
+		for (mit = lit->begin(); mit != lit->end(); mit++) {
 			feats[offset] = mappings[mit->first];
 			vals[offset] = mit->second;
 			offset++;

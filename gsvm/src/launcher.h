@@ -70,7 +70,7 @@ public:
 template<typename Matrix, typename Strategy>
 CrossValidationSolver<GaussKernel, Matrix, Strategy>* ApplicationLauncher::createCrossValidator() {
 	ifstream input(conf.dataFile.c_str());
-	DefaultSolverFactory<Matrix, Strategy> reader(
+	BaseSolverFactory<Matrix, Strategy> reader(
 			input, conf.trainingParams, conf.stopCriterion, conf.multiclass);
 
 	Timer timer(true);
@@ -87,7 +87,7 @@ CrossValidationSolver<GaussKernel, Matrix, Strategy>* ApplicationLauncher::creat
 template<typename Matrix, typename Strategy>
 AbstractSolver<GaussKernel, Matrix, Strategy>* ApplicationLauncher::createSolver() {
 	ifstream input(conf.dataFile.c_str());
-	DefaultSolverFactory<Matrix, Strategy> reader(
+	BaseSolverFactory<Matrix, Strategy> reader(
 			input, conf.trainingParams, conf.stopCriterion, conf.multiclass);
 
 	Timer timer(true);

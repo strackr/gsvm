@@ -12,7 +12,8 @@ SOURCES = \
 		src/svm/params.cc \
 		src/model/selection.cc \
 		src/feature/feature.cc \
-		src/io/data.cc \
+		src/io/dataset.cc \
+		src/io/solver_factory.cc \
 		src/time/timer.cc \
 		src/logging/log.cc
 

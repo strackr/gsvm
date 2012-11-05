@@ -23,7 +23,7 @@
 
 #include <boost/program_options.hpp>
 
-#include "io/data.h"
+#include "io/solver_factory.h"
 #include "svm/kernel.h"
 #include "svm/strategy.h"
 #include "time/timer.h"

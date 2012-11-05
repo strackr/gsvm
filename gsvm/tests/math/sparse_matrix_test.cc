@@ -18,15 +18,17 @@
 
 #include <gtest/gtest.h>
 
-#include "../../src/io/data.h"
 #include "../../src/math/matrix.h"
+
+#include "../../src/io/dataset.h"
+#include "../../src/io/solver_factory.h"
 
 TEST(SparseMatrixSuite, shouldEvaluateDotProductForOneSample) {
 	// given
-	list<map<feature_id, fvalue>*> samples;
+	list<map<feature_id, fvalue> > samples;
 	map<feature_id, fvalue> sample;
 	sample[0] = 0.5;
-	samples.push_back(&sample);
+	samples.push_back(sample);
 
 	map<feature_id, feature_id> mappings;
 	mappings[0] = 0;
