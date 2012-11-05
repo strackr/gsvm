@@ -20,7 +20,8 @@
 
 template<>
 dfmatrix* FeatureMatrixBuilder<dfmatrix>::getFeatureMatrix(
-		list<map<feature_id, fvalue>*> &features, map<feature_id, feature_id> mappings) {
+		list<map<feature_id, fvalue>*>& features,
+		map<feature_id, feature_id>& mappings) {
 	fmatrix *samples = fmatrix_alloc(features.size(), mappings.size());
 	sample_id row = 0;
 
@@ -37,7 +38,8 @@ dfmatrix* FeatureMatrixBuilder<dfmatrix>::getFeatureMatrix(
 
 template<>
 sfmatrix* FeatureMatrixBuilder<sfmatrix>::getFeatureMatrix(
-		list<map<feature_id, fvalue>*> &features, map<feature_id, feature_id> mappings) {
+		list<map<feature_id, fvalue>*>& features,
+		map<feature_id, feature_id>& mappings) {
 	// count total number of features
 	quantity total = 0;
 	list<map<feature_id, fvalue>*>::iterator lit;

@@ -55,8 +55,8 @@ template<typename Matrix>
 class FeatureMatrixBuilder {
 
 public:
-	Matrix* getFeatureMatrix(list<map<feature_id, fvalue>*> &features,
-			map<feature_id, feature_id> mappings);
+	Matrix* getFeatureMatrix(list<map<feature_id, fvalue>*>& features,
+			map<feature_id, feature_id>& mappings);
 
 };
 
