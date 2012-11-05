@@ -116,7 +116,7 @@ void MatrixEvaluator<Matrix>::dist(sample_id id, sample_id rangeFrom, sample_id 
 		sample_id* mappings, fvector* buffer) {
 	fvalue* data = buffer->data;
 	for (sample_id i = rangeFrom; i < rangeTo; i++) {
-		data[i] = dot(mappings[i], id);
+		data[i] = dist(mappings[i], id);
 	}
 }
 

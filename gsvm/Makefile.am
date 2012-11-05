@@ -25,4 +25,4 @@ TESTS = gsvmcheck
 check_PROGRAMS = gsvmcheck
 gsvmcheck_SOURCES = ${SOURCES} \
 		tests/test.cc \
-		tests/math/sparse_matrix_test.cc
+		tests/math/matrix_operations_test.cc
