@@ -24,25 +24,29 @@
 
 struct PairwiseTrainingResult {
 
-	pair<label_id, label_id> labels;
+	pair<label_id, label_id> trainingLabels;
 	vector<fvalue> alphas;
 	fvalue bias;
+	vector<label_id> labels;
 	vector<sample_id> samples;
 	quantity size;
 
-	PairwiseTrainingResult(const pair<label_id, label_id>& labels, quantity size) :
-			labels(labels),
+	PairwiseTrainingResult(pair<label_id, label_id>& trainingLabels, quantity size) :
+			trainingLabels(trainingLabels),
 			alphas(vector<fvalue>()),
 			bias(0),
+			labels(vector<label_id>()),
 			samples(vector<sample_id>()),
 			size(0) {
 		alphas.reserve(size);
+		labels.reserve(size);
 		samples.reserve(size);
 	}
 
 	void clear() {
 		alphas.clear();
 		bias = 0;
+		labels.clear();
 		samples.clear();
 	}
 
@@ -62,13 +66,17 @@ struct PairwiseTrainingState {
  */
 template<typename Kernel, typename Matrix>
 class PairwiseClassifier: public Classifier<Kernel, Matrix> {
-	RbfKernelEvaluator<Kernel, Matrix>* evaluator;
 
+	RbfKernelEvaluator<Kernel, Matrix>* evaluator;
 	PairwiseTrainingState* state;
+	fvector *buffer;
+
+protected:
+	label_id classifyForModel(sample_id sample, PairwiseTrainingResult* model);
 
 public:
 	PairwiseClassifier(RbfKernelEvaluator<Kernel, Matrix> *evaluator,
-			PairwiseTrainingState* state);
+			PairwiseTrainingState* state, fvector *buffer);
 	virtual ~PairwiseClassifier();
 
 	virtual label_id classify(sample_id sample);
@@ -79,9 +87,10 @@ public:
 template<typename Kernel, typename Matrix>
 PairwiseClassifier<Kernel, Matrix>::PairwiseClassifier(
 		RbfKernelEvaluator<Kernel, Matrix> *evaluator,
-		PairwiseTrainingState* state) :
+		PairwiseTrainingState* state, fvector *buffer) :
 		evaluator(evaluator),
-		state(state) {
+		state(state),
+		buffer(buffer) {
 }
 
 template<typename Kernel, typename Matrix>
@@ -90,7 +99,39 @@ PairwiseClassifier<Kernel, Matrix>::~PairwiseClassifier() {
 
 template<typename Kernel, typename Matrix>
 label_id PairwiseClassifier<Kernel, Matrix>::classify(sample_id sample) {
-	// TODO
+	vector<quantity> votes(state->models.size(), 0);
+	label_id maxLabelId = 0;
+	quantity maxLabelValue = 0;
+
+	vector<PairwiseTrainingResult>::iterator it;
+	for (it = state->models.begin(); it != state->models.end(); it++) {
+		PairwiseTrainingResult* result = it.base();
+		label_id label = classifyForModel(sample, result);
+		votes[label]++;
+		if (votes[label] > maxLabelValue) {
+			maxLabelId = label;
+			maxLabelValue = votes[label];
+		}
+	}
+	return maxLabelId;
+}
+
+template<typename Kernel, typename Matrix>
+label_id PairwiseClassifier<Kernel, Matrix>::classifyForModel(sample_id sample,
+		PairwiseTrainingResult* model) {
+	quantity svNumber = model->size;
+	fvectorv alphas = fvectorv_array(model->alphas.data(), svNumber);
+	evaluator->evalInnerKernel(sample, 0, svNumber,
+			model->samples.data(), buffer);
+	fvalue dec = 0.0;
+	label_id firstLabel = model->trainingLabels.first;
+	label_id* labels = model->labels.data();
+	fvalue* kernels = buffer->data;
+	for (sample_id i = 0; i < svNumber; i++) {
+		fvalue yy = (labels[i] == firstLabel) ? 1.0 : -1.0;
+		dec += yy * kernels[i];
+	}
+	return (dec > 0) ? model->trainingLabels.first : model->trainingLabels.second;
 }
 
 template<typename Kernel, typename Matrix>
@@ -106,7 +147,7 @@ quantity PairwiseClassifier<Kernel, Matrix>::getSvNumber() {
 
 /**
  * Pairwise solver performs SVM training by generating SVM state for all
- * two-element combinations of the class labels.
+ * two-element combinations of the class trainingLabels.
  */
 template<typename Kernel, typename Matrix, typename Strategy>
 class PairwiseSolver: public AbstractSolver<Kernel, Matrix, Strategy> {
@@ -173,18 +214,20 @@ PairwiseSolver<Kernel, Matrix, Strategy>::~PairwiseSolver() {
 
 template<typename Kernel, typename Matrix, typename Strategy>
 Classifier<Kernel, Matrix>* PairwiseSolver<Kernel, Matrix, Strategy>::getClassifier() {
-	return new PairwiseClassifier<Kernel, Matrix>(this->cache->getEvaluator(), &state);
+	return new PairwiseClassifier<Kernel, Matrix>(this->cache->getEvaluator(),
+			&state, this->cache->getBuffer());
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
 void PairwiseSolver<Kernel, Matrix, Strategy>::train() {
 	vector<PairwiseTrainingResult>::iterator it;
 	for (it = state.models.begin(); it != state.models.end(); it++) {
-		pair<label_id, label_id> trainingPair = it->labels;
+		pair<label_id, label_id> trainingPair = it->trainingLabels;
 		sortLabels(this->labels, this->currentSize, trainingPair);
 		this->trainForCache(this->cache);
 
 		fvalue* resultAlphas = it->alphas.data();
+		label_id* resultLabels = it->labels.data();
 		fvalue* cacheAlphas = this->cache->getAlphas()->data;
 		fvalue bias = 0;
 		sample_id* cacheSamples = this->cache->getBackwardOrder();
@@ -193,6 +236,7 @@ void PairwiseSolver<Kernel, Matrix, Strategy>::train() {
 		for (quantity i = 0; i < svNumber; i++) {
 			fvalue alpha = cacheAlphas[i];
 			resultAlphas[i] = alpha;
+			resultLabels[i] = this->labels[i];
 			resultSamples[i] = cacheSamples[i];
 			bias += alpha * (this->labels[i] == trainingPair.first ? 1.0 : -1.0);
 		}
