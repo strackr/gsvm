@@ -12,8 +12,8 @@ SOURCES = \
 		src/svm/params.cc \
 		src/model/selection.cc \
 		src/feature/feature.cc \
-		src/io/dataset.cc \
-		src/io/solver_factory.cc \
+		src/data/dataset.cc \
+		src/data/solver_factory.cc \
 		src/time/timer.cc \
 		src/logging/log.cc
 
@@ -25,5 +25,5 @@ TESTS = gsvmcheck
 check_PROGRAMS = gsvmcheck
 gsvmcheck_SOURCES = ${SOURCES} \
 		tests/test.cc \
-		tests/math/dataset_factory_test.cc \
+		tests/data/dataset_factory_test.cc \
 		tests/math/matrix_operations_test.cc

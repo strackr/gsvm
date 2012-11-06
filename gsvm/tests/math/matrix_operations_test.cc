@@ -22,8 +22,8 @@
 #include "matrix_utils.h"
 
 #include "../../src/math/matrix.h"
-#include "../../src/io/dataset.h"
-#include "../../src/io/solver_factory.h"
+#include "../../src/data/dataset.h"
+#include "../../src/data/solver_factory.h"
 
 using namespace boost;
 using namespace testing;

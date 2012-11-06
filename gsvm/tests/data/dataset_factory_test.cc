@@ -19,10 +19,10 @@
 #include <gtest/gtest.h>
 #include <boost/smart_ptr.hpp>
 
-#include "matrix_utils.h"
+#include "../math/matrix_utils.h"
 
-#include "../../src/io/dataset.h"
-#include "../../src/io/solver_factory.h"
+#include "../../src/data/dataset.h"
+#include "../../src/data/solver_factory.h"
 
 using namespace boost;
 

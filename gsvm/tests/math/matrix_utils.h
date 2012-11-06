@@ -33,8 +33,8 @@
 #include <algorithm>
 
 #include "../../src/math/numeric.h"
-#include "../../src/io/dataset.h"
-#include "../../src/io/solver_factory.h"
+#include "../../src/data/dataset.h"
+#include "../../src/data/solver_factory.h"
 
 template<typename Matrix>
 class SimpleMatrixFactory {
