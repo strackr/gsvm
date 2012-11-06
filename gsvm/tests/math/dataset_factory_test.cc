@@ -17,9 +17,14 @@
  **************************************************************************/
 
 #include <gtest/gtest.h>
+#include <boost/smart_ptr.hpp>
+
+#include "matrix_utils.h"
 
 #include "../../src/io/dataset.h"
 #include "../../src/io/solver_factory.h"
+
+using namespace boost;
 
 TEST(DataSetFactorySuite, ShouldCreateCompleteDataSet) {
 	// given
@@ -58,4 +63,46 @@ TEST(DataSetFactorySuite, ShouldCreateCompleteDataSet) {
 	ASSERT_EQ(3, labels.size());
 	ASSERT_TRUE(labels[0] == labels[2]);
 	ASSERT_TRUE(labels[0] != labels[1]);
+}
+
+TEST(DataSetFactorySuite, ShouldCreateCorrectSparseMatrix) {
+	// given
+	string desc =
+			"label1 1:0.6 2:0.4\n"
+			"label2 2:0.5\n"
+			"label1 1:0.3";
+
+	istringstream stream(desc);
+	SparseFormatDataSetFactory factory(stream);
+	FeatureMatrixBuilder<sfmatrix> builder;
+
+	map<feature_id, feature_id> mappings;
+	mappings[1] = 0;
+	mappings[2] = 1;
+
+	// when
+	DataSet dataSet = factory.createDataSet();
+	scoped_ptr<sfmatrix> matrix(
+			builder.getFeatureMatrix(dataSet.features, mappings));
+
+	// then
+	ASSERT_EQ(2, matrix->width);
+	ASSERT_EQ(3, matrix->height);
+
+	ASSERT_EQ(0.6, matrix->values[0]);
+	ASSERT_EQ(0.4, matrix->values[1]);
+	ASSERT_EQ(0.5, matrix->values[3]);
+	ASSERT_EQ(0.3, matrix->values[5]);
+
+	ASSERT_EQ(0, matrix->features[0]);
+	ASSERT_EQ(1, matrix->features[1]);
+	ASSERT_EQ(INVALID_FEATURE_ID, matrix->features[2]);
+	ASSERT_EQ(1, matrix->features[3]);
+	ASSERT_EQ(INVALID_FEATURE_ID, matrix->features[4]);
+	ASSERT_EQ(0, matrix->features[5]);
+	ASSERT_EQ(INVALID_FEATURE_ID, matrix->features[6]);
+
+	ASSERT_EQ(0, matrix->offsets[0]);
+	ASSERT_EQ(3, matrix->offsets[1]);
+	ASSERT_EQ(5, matrix->offsets[2]);
 }

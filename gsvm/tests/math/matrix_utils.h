@@ -55,7 +55,7 @@ Matrix* SimpleMatrixFactory<Matrix>::create(string& desc) {
 	for (it = dataSet.labelNames.begin(); it != dataSet.labelNames.end(); it++) {
 		identity[it->first] = it->first;
 	}
-	return matrixBuilder.getFeatureMatrix(dataSet.features, identity);;
+	return matrixBuilder.getFeatureMatrix(dataSet.features, identity);
 }
 
 #endif
