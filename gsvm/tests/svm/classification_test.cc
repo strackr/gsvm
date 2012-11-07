@@ -38,7 +38,7 @@ class ClassificationSuite: public TestWithParam<MulticlassApproach> {
 };
 
 INSTANTIATE_TEST_CASE_P(InstantiationName,
-		ClassificationSuite, Values(ALL_AT_ONCE));
+		ClassificationSuite, Values(ALL_AT_ONCE, PAIRWISE));
 
 TEST_P(ClassificationSuite, ShouldPerformSimpleMulticlassClassification) {
 	// given
@@ -69,12 +69,12 @@ TEST_P(ClassificationSuite, ShouldPerformSimpleMulticlassClassification) {
 
 	// then
 	label_id *labels = solver->getLabels();
-	ASSERT_EQ(labels[0], classifier->classify(0));
-	ASSERT_EQ(labels[1], classifier->classify(1));
-	ASSERT_EQ(labels[2], classifier->classify(2));
-	ASSERT_EQ(labels[3], classifier->classify(3));
-	ASSERT_EQ(labels[4], classifier->classify(4));
-	ASSERT_EQ(labels[5], classifier->classify(5));
+	ASSERT_TRUE(labels[0] == classifier->classify(0));
+	ASSERT_TRUE(labels[1] == classifier->classify(1));
+	ASSERT_TRUE(labels[2] == classifier->classify(2));
+	ASSERT_TRUE(labels[3] == classifier->classify(3));
+	ASSERT_TRUE(labels[4] == classifier->classify(4));
+	ASSERT_TRUE(labels[5] == classifier->classify(5));
 
 	multiset<label_id> labelSet(labels, labels + 6);
 	ASSERT_EQ(2, labelSet.count(0));
