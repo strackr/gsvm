@@ -14,16 +14,25 @@ SOURCES = \
 		src/feature/feature.cc \
 		src/data/dataset.cc \
 		src/data/solver_factory.cc \
-		src/time/timer.cc \
+		src/time/timer.cc
+SOURCES_LOGGING = \
 		src/logging/log.cc
 
 bin_PROGRAMS = gsvm
-gsvm_SOURCES = ${SOURCES} \
+gsvm_SOURCES = ${SOURCES} ${SOURCES_LOGGING} \
 		src/gsvm.cc
 
-TESTS = gsvmcheck
-check_PROGRAMS = gsvmcheck
-gsvmcheck_SOURCES = ${SOURCES} \
-		tests/test.cc \
+
+SOURCES_CHECK = \
 		tests/data/dataset_factory_test.cc \
-		tests/math/matrix_operations_test.cc
+		tests/math/matrix_operations_test.cc \
+		tests/svm/classification_test.cc
+SORUCES_LOGGING_CHECK = \
+		tests/logging/fake_log.cc
+
+check_PROGRAMS = gsvmcheck
+gsvmcheck_SOURCES = ${SOURCES} ${SOURCES_CHECK} ${SORUCES_LOGGING_CHECK} \
+		tests/test.cc
+
+TESTS = gsvmcheck
+		

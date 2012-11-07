@@ -35,6 +35,7 @@
 #include "../svm/universal_solver.h"
 #include "../svm/pairwise_solver.h"
 #include "../svm/validation.h"
+#include "../svm/strategy.h"
 #include "../feature/feature.h"
 
 using namespace std;
@@ -86,7 +87,7 @@ inline Matrix* FeatureMatrixBuilder<Matrix>::getFeatureMatrix(
 }
 
 
-template<typename Matrix, typename Strategy>
+template<typename Matrix = sfmatrix, typename Strategy = SolverStrategy<MDM, FAIR> >
 class BaseSolverFactory {
 
 private:
@@ -123,8 +124,8 @@ public:
 };
 
 template<typename Matrix, typename Strategy>
-BaseSolverFactory<Matrix, Strategy>::BaseSolverFactory(
-		istream& input, TrainParams& params,
+BaseSolverFactory<Matrix, Strategy>::BaseSolverFactory(istream& input,
+		TrainParams& params= TrainParams(),
 		StopCriterion strategy = ADJMNORM,
 		MulticlassApproach multiclass = ALL_AT_ONCE,
 		bool reduceDim = false) :
