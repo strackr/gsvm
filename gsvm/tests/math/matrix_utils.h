@@ -50,12 +50,7 @@ Matrix* SimpleMatrixFactory<Matrix>::create(string& desc) {
 	SparseFormatDataSetFactory factory(stream);
 	DataSet dataSet = factory.createDataSet();
 	FeatureMatrixBuilder<Matrix> matrixBuilder;
-	map<feature_id, feature_id> identity;
-	map<feature_id, string>::iterator it;
-	for (it = dataSet.labelNames.begin(); it != dataSet.labelNames.end(); it++) {
-		identity[it->first] = it->first;
-	}
-	return matrixBuilder.getFeatureMatrix(dataSet.features, identity);
+	return matrixBuilder.getFeatureMatrix(dataSet.features);
 }
 
 #endif

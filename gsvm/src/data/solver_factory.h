@@ -59,7 +59,31 @@ public:
 	Matrix* getFeatureMatrix(list<map<feature_id, fvalue> >& features,
 			map<feature_id, feature_id>& mappings);
 
+	Matrix* getFeatureMatrix(list<map<feature_id, fvalue> >& features);
+
 };
+
+template<typename Matrix>
+inline Matrix* FeatureMatrixBuilder<Matrix>::getFeatureMatrix(
+		list<map<feature_id, fvalue> >& features) {
+	set<feature_id> uniqFeatures;
+	list<map<feature_id, fvalue> >::iterator fit;
+	for (fit = features.begin(); fit != features.end(); fit++) {
+		map<feature_id, fvalue>::iterator sit;
+		for (sit = fit->begin(); sit != fit->end(); sit++) {
+			uniqFeatures.insert(sit->first);
+		}
+	}
+
+	map<feature_id, feature_id> optimalMapping;
+
+	feature_id current = 0;
+	set<feature_id>::iterator ufit;
+	for (ufit = uniqFeatures.begin(); ufit != uniqFeatures.end(); ufit++) {
+		optimalMapping[*ufit] = current++;
+	}
+	return getFeatureMatrix(features, optimalMapping);
+}
 
 
 template<typename Matrix, typename Strategy>
