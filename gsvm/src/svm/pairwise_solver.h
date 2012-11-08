@@ -162,6 +162,7 @@ class PairwiseSolver: public AbstractSolver<Kernel, Matrix, Strategy> {
 	};
 
 	PairwiseTrainingState state;
+	vector<quantity> classSizes;
 
 	void sortLabels(label_id *sampleLabels, quantity size, pair<label_id, label_id>& labels);
 
@@ -185,15 +186,15 @@ PairwiseSolver<Kernel, Matrix, Strategy>::PairwiseSolver(
 		AbstractSolver<Kernel, Matrix, Strategy>(labelNames, samples, labels, params, stopStrategy),
 		state(PairwiseTrainingState()) {
 	label_id maxLabel = labelNames.size();
-	vector<quantity> labelSizes(maxLabel, 0);
+	classSizes = vector<quantity>(maxLabel, 0);
 	for (sample_id sample = 0; sample < this->size; sample++) {
-		labelSizes[this->labels[sample]]++;
+		classSizes[this->labels[sample]]++;
 	}
 
 	// sort
 	vector<pair<label_id, quantity> > sizes(maxLabel);
 	for (label_id label = 0; label < maxLabel; label++) {
-		sizes[label] = pair<label_id, quantity>(label, labelSizes[label]);
+		sizes[label] = pair<label_id, quantity>(label, classSizes[label]);
 	}
 	sort(sizes.begin(), sizes.end(), PairValueComparator<label_id, quantity>());
 
@@ -222,8 +223,10 @@ template<typename Kernel, typename Matrix, typename Strategy>
 void PairwiseSolver<Kernel, Matrix, Strategy>::train() {
 	vector<PairwiseTrainingResult>::iterator it;
 	for (it = state.models.begin(); it != state.models.end(); it++) {
-		pair<label_id, label_id> trainingPair = it->trainingLabels;
-		sortLabels(this->labels, this->currentSize, trainingPair);
+		pair<label_id, label_id> trainPair = it->trainingLabels;
+		sortLabels(this->labels, this->currentSize, trainPair);
+		quantity size = classSizes[trainPair.first] + classSizes[trainPair.first];
+		this->setCurrentSize(size);
 		this->trainForCache(this->cache);
 
 		fvalue* resultAlphas = it->alphas.data();
@@ -238,7 +241,7 @@ void PairwiseSolver<Kernel, Matrix, Strategy>::train() {
 			resultAlphas[i] = alpha;
 			resultLabels[i] = this->labels[i];
 			resultSamples[i] = cacheSamples[i];
-			bias += alpha * (this->labels[i] == trainingPair.first ? 1.0 : -1.0);
+			bias += alpha * (this->labels[i] == trainPair.first ? 1.0 : -1.0);
 		}
 		it->bias = bias;
 		it->size = svNumber;
@@ -251,7 +254,7 @@ void PairwiseSolver<Kernel, Matrix, Strategy>::sortLabels(
 	label_id first = labels.first;
 	label_id second = labels.second;
 	id train = 0;
-	id test = size;
+	id test = size - 1;
 	while (train < test) {
 		while (sampleLabels[train] == first || sampleLabels[train] == second) {
 			train++;

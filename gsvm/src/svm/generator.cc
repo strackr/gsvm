@@ -18,41 +18,48 @@
 
 #include "generator.h"
 
-ClassDistribution::ClassDistribution(quantity labelNum, label_id *smplMemb, quantity smplNum) :
-		labelNumber(labelNum) {
-	bufferSizes = new quantity[labelNum];
+ClassDistribution::ClassDistribution(quantity labelNum,
+		label_id *smplMemb, quantity smplNum) :
+		maxLabelNumber(labelNum),
+		labelNumber(labelNum),
+		labelMappings(vector<id>(labelNum)),
+		bufferSizes(vector<id>(labelNum, 0)),
+		buffers(vector<id*>(labelNum)),
+		bufferHolder(vector<id>(smplNum)),
+		offsets(vector<id>(smplNum)) {
 	for (quantity i = 0; i < labelNum; i++) {
-		bufferSizes[i] = 0;
+		labelMappings[i] = i;
 	}
-	buffers = new id*[labelNum];
-	bufferHolder = new id[smplNum];
-	offsets = new id[smplNum];
 	for (quantity i = 0; i < smplNum; i++) {
 		bufferSizes[smplMemb[i]]++;
 		offsets[i] = i;
 	}
-	buffers[0] = bufferHolder;
+	buffers[0] = bufferHolder.data();
 	for (quantity i = 1; i < labelNum; i++) {
-		buffers[i] = bufferHolder + bufferSizes[i - 1];
+		buffers[i] = bufferHolder.data() + bufferSizes[i - 1];
 	}
 }
 
 ClassDistribution::~ClassDistribution() {
-	delete [] bufferSizes;
-	delete [] buffers;
-	delete [] offsets;
 }
 
 void ClassDistribution::refresh(label_id* smplMemb, quantity smplNum) {
-	for (quantity i = 0; i < labelNumber; i++) {
+	for (quantity i = 0; i < maxLabelNumber; i++) {
 		bufferSizes[i] = 0;
 	}
 	for (quantity i = 0; i < smplNum; i++) {
 		label_id label = smplMemb[i];
 		buffers[label][bufferSizes[label]] = i;
 		bufferSizes[label]++;
-		offsets[i] = buffers[label] - bufferHolder;
+		offsets[i] = buffers[label] - bufferHolder.data();
 	}
+	id currentLabel = 0;
+	for (quantity i = 0; i < maxLabelNumber; i++) {
+		if (bufferSizes[i]) {
+			labelMappings[currentLabel++] = i;
+		}
+	}
+	labelNumber = currentLabel;
 }
 
 void ClassDistribution::exchange(sample_id u, sample_id v) {

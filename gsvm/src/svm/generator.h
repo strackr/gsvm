@@ -171,11 +171,13 @@ inline void CandidateIdGenerator<DETERMINISTIC>::reset(label_id *labels, id maxI
 
 struct ClassDistribution {
 
+	quantity maxLabelNumber;
 	quantity labelNumber;
-	quantity *bufferSizes;
-	id **buffers;
-	id *bufferHolder;
-	id *offsets;
+	vector<id> labelMappings;
+	vector<quantity> bufferSizes;
+	vector<id*> buffers;
+	vector<id> bufferHolder;
+	vector<id> offsets;
 
 	ClassDistribution(quantity labelNum, label_id *smplMemb, quantity smplNum);
 	~ClassDistribution();
@@ -210,7 +212,7 @@ inline CandidateIdGenerator<FAIR>::CandidateIdGenerator(TrainParams& params,
 }
 
 inline id CandidateIdGenerator<FAIR>::nextId() {
-	label_id label = generator.nextId(distr.labelNumber);
+	label_id label = distr.labelMappings[generator.nextId(distr.labelNumber)];
 	id offset = generator.nextId(distr.bufferSizes[label]);
 	return distr.buffers[label][offset];
 }
