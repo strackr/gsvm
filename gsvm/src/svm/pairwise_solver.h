@@ -33,10 +33,10 @@ struct PairwiseTrainingResult {
 
 	PairwiseTrainingResult(pair<label_id, label_id>& trainingLabels, quantity size) :
 			trainingLabels(trainingLabels),
-			alphas(vector<fvalue>()),
+			alphas(vector<fvalue>(size, 0.0)),
 			bias(0),
-			labels(vector<label_id>()),
-			samples(vector<sample_id>()),
+			labels(vector<label_id>(size, INVALID_LABEL_ID)),
+			samples(vector<sample_id>(size, INVALID_SAMPLE_ID)),
 			size(0) {
 		alphas.reserve(size);
 		labels.reserve(size);
@@ -221,15 +221,18 @@ Classifier<Kernel, Matrix>* PairwiseSolver<Kernel, Matrix, Strategy>::getClassif
 
 template<typename Kernel, typename Matrix, typename Strategy>
 void PairwiseSolver<Kernel, Matrix, Strategy>::train() {
+	quantity totalSize = this->currentSize;
 	vector<PairwiseTrainingResult>::iterator it;
 	for (it = state.models.begin(); it != state.models.end(); it++) {
 		pair<label_id, label_id> trainPair = it->trainingLabels;
-		sortLabels(this->labels, this->currentSize, trainPair);
+		sortLabels(this->labels, totalSize, trainPair);
 		quantity size = classSizes[trainPair.first] + classSizes[trainPair.first];
 		this->setCurrentSize(size);
+		this->reset();
 		this->trainForCache(this->cache);
 
 		fvalue* resultAlphas = it->alphas.data();
+		vector<label_id> x(resultAlphas, resultAlphas+6);
 		label_id* resultLabels = it->labels.data();
 		fvalue* cacheAlphas = this->cache->getAlphas()->data;
 		fvalue bias = 0;
@@ -245,6 +248,12 @@ void PairwiseSolver<Kernel, Matrix, Strategy>::train() {
 		}
 		it->bias = bias;
 		it->size = svNumber;
+	}
+	sample_id* mapping = this->cache->getForwardOrder();
+	for (it = state.models.begin(); it != state.models.end(); it++) {
+		for (id i = 0; i < it->size; i++) {
+			it->samples[i] = mapping[it->samples[i]];
+		}
 	}
 }
 
