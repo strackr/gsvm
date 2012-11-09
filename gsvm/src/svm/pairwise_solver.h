@@ -53,6 +53,7 @@ struct PairwiseTrainingResult {
 struct PairwiseTrainingState {
 
 	vector<PairwiseTrainingResult> models;
+	quantity svNumber;
 
 };
 
@@ -69,7 +70,8 @@ class PairwiseClassifier: public Classifier<Kernel, Matrix> {
 	fvector *buffer;
 
 protected:
-	label_id classifyForModel(sample_id sample, PairwiseTrainingResult* model);
+	label_id classifyForModel(sample_id sample,
+			PairwiseTrainingResult* model, fvector* buffer);
 
 public:
 	PairwiseClassifier(RbfKernelEvaluator<Kernel, Matrix> *evaluator,
@@ -100,10 +102,12 @@ label_id PairwiseClassifier<Kernel, Matrix>::classify(sample_id sample) {
 	label_id maxLabelId = 0;
 	quantity maxLabelValue = 0;
 
+	evaluator->evalInnerKernel(sample, 0, state->svNumber, buffer);
+
 	vector<PairwiseTrainingResult>::iterator it;
 	for (it = state->models.begin(); it != state->models.end(); it++) {
 		PairwiseTrainingResult* result = it.base();
-		label_id label = classifyForModel(sample, result);
+		label_id label = classifyForModel(sample, result, buffer);
 		votes[label]++;
 		if (votes[label] > maxLabelValue) {
 			maxLabelId = label;
@@ -115,18 +119,17 @@ label_id PairwiseClassifier<Kernel, Matrix>::classify(sample_id sample) {
 
 template<typename Kernel, typename Matrix>
 label_id PairwiseClassifier<Kernel, Matrix>::classifyForModel(sample_id sample,
-		PairwiseTrainingResult* model) {
+		PairwiseTrainingResult* model, fvector* buffer) {
 	quantity svNumber = model->size;
-	fvectorv alphas = fvectorv_array(model->alphas.data(), svNumber);
-	evaluator->evalInnerKernel(sample, 0, svNumber,
-			model->samples.data(), buffer);
 	fvalue dec = 0.0;
-	label_id firstLabel = model->trainingLabels.first;
+	label_id positiveLabel = model->trainingLabels.first;
+	fvalue* alphas = model->alphas.data();
 	label_id* labels = model->labels.data();
+	sample_id* samples = model->samples.data();
 	fvalue* kernels = buffer->data;
 	for (sample_id i = 0; i < svNumber; i++) {
-		fvalue yy = (labels[i] == firstLabel) ? 1.0 : -1.0;
-		dec += yy * kernels[i];
+		fvalue yy = (labels[i] == positiveLabel) ? 1.0 : -1.0;
+		dec += yy * alphas[i] * kernels[samples[i]];
 	}
 	return (dec > 0) ? model->trainingLabels.first : model->trainingLabels.second;
 }
@@ -171,6 +174,8 @@ public:
 
 	void train();
 	Classifier<Kernel, Matrix>* getClassifier();
+
+	quantity getSvNumber();
 
 };
 
@@ -246,12 +251,21 @@ void PairwiseSolver<Kernel, Matrix, Strategy>::train() {
 		it->bias = bias;
 		it->size = svNumber;
 	}
+
+	id freeOffset = state.models.back().size;
 	sample_id* mapping = this->cache->getForwardOrder();
 	for (it = state.models.begin(); it != state.models.end(); it++) {
 		for (id i = 0; i < it->size; i++) {
-			it->samples[i] = mapping[it->samples[i]];
+			id realOffset = mapping[it->samples[i]];
+			if (realOffset >= freeOffset) {
+				this->swapSamples(realOffset, freeOffset);
+				realOffset = freeOffset++;
+			}
+			it->samples[i] = realOffset;
 		}
 	}
+	state.svNumber = freeOffset;
+
 	this->setCurrentSize(totalSize);
 }
 
@@ -274,6 +288,11 @@ quantity PairwiseSolver<Kernel, Matrix, Strategy>::reorderSamples(
 		}
 	}
 	return train;
+}
+
+template<typename Kernel, typename Matrix, typename Strategy>
+quantity PairwiseSolver<Kernel, Matrix, Strategy>::getSvNumber() {
+	return state.svNumber;
 }
 
 #endif
