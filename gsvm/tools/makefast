@@ -1,1 +1,1 @@
-make CXXFLAGS='-Wall -mtune=native -march=native -Ofast -ffast-math -fvisibility=hidden -flto -fwhole-program' clean all
+make -j CXXFLAGS='-Wall -mtune=native -march=native -Ofast -ffast-math -fvisibility=hidden -flto -fwhole-program' clean all
