@@ -38,9 +38,6 @@ struct PairwiseTrainingResult {
 			labels(vector<label_id>(size, INVALID_LABEL_ID)),
 			samples(vector<sample_id>(size, INVALID_SAMPLE_ID)),
 			size(0) {
-		alphas.reserve(size);
-		labels.reserve(size);
-		samples.reserve(size);
 	}
 
 	void clear() {
@@ -162,9 +159,9 @@ class PairwiseSolver: public AbstractSolver<Kernel, Matrix, Strategy> {
 	};
 
 	PairwiseTrainingState state;
-	vector<quantity> classSizes;
 
-	void sortLabels(label_id *sampleLabels, quantity size, pair<label_id, label_id>& labels);
+	quantity reorderSamples(label_id *sampleLabels, quantity size,
+			pair<label_id, label_id>& labels);
 
 public:
 	PairwiseSolver(map<label_id, string> labelNames, Matrix *samples,
@@ -183,10 +180,11 @@ PairwiseSolver<Kernel, Matrix, Strategy>::PairwiseSolver(
 		map<label_id, string> labelNames, Matrix *samples,
 		label_id *labels, TrainParams &params,
 		StopCriterionStrategy *stopStrategy) :
-		AbstractSolver<Kernel, Matrix, Strategy>(labelNames, samples, labels, params, stopStrategy),
+		AbstractSolver<Kernel, Matrix, Strategy>(labelNames,
+				samples, labels, params, stopStrategy),
 		state(PairwiseTrainingState()) {
 	label_id maxLabel = labelNames.size();
-	classSizes = vector<quantity>(maxLabel, 0);
+	vector<quantity> classSizes(maxLabel, 0);
 	for (sample_id sample = 0; sample < this->size; sample++) {
 		classSizes[this->labels[sample]]++;
 	}
@@ -225,8 +223,7 @@ void PairwiseSolver<Kernel, Matrix, Strategy>::train() {
 	vector<PairwiseTrainingResult>::iterator it;
 	for (it = state.models.begin(); it != state.models.end(); it++) {
 		pair<label_id, label_id> trainPair = it->trainingLabels;
-		sortLabels(this->labels, totalSize, trainPair);
-		quantity size = classSizes[trainPair.first] + classSizes[trainPair.first];
+		quantity size = reorderSamples(this->labels, totalSize, trainPair);
 		this->setCurrentSize(size);
 		this->reset();
 		this->trainForCache(this->cache);
@@ -255,10 +252,11 @@ void PairwiseSolver<Kernel, Matrix, Strategy>::train() {
 			it->samples[i] = mapping[it->samples[i]];
 		}
 	}
+	this->setCurrentSize(totalSize);
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-void PairwiseSolver<Kernel, Matrix, Strategy>::sortLabels(
+quantity PairwiseSolver<Kernel, Matrix, Strategy>::reorderSamples(
 		label_id *sampleLabels, quantity size, pair<label_id, label_id>& labels) {
 	label_id first = labels.first;
 	label_id second = labels.second;
@@ -275,6 +273,7 @@ void PairwiseSolver<Kernel, Matrix, Strategy>::sortLabels(
 			this->swapSamples(train++, test--);
 		}
 	}
+	return train;
 }
 
 #endif
