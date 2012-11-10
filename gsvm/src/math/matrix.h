@@ -108,7 +108,7 @@ MatrixEvaluator<Matrix>::MatrixEvaluator(Matrix* matrix) :
 
 template<typename Matrix>
 MatrixEvaluator<Matrix>::~MatrixEvaluator() {
-	delete x2;
+	delete [] x2;
 }
 
 template<typename Matrix>
