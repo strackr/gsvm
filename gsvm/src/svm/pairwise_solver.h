@@ -287,7 +287,6 @@ quantity PairwiseSolver<Kernel, Matrix, Strategy>::reorderSamples(
 			test--;
 		}
 		if (train < test) {
-			cout << "......." << train << " " << test << endl;
 			this->swapSamples(train++, test--);
 		}
 	}
