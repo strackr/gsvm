@@ -125,16 +125,12 @@ label_id PairwiseClassifier<Kernel, Matrix>::classify(sample_id sample) {
 template<typename Kernel, typename Matrix>
 label_id PairwiseClassifier<Kernel, Matrix>::classifyForModel(sample_id sample,
 		PairwiseTrainingResult* model, fvector* buffer) {
-	quantity svNumber = model->size;
 	fvalue dec = 0.0;
 	label_id positiveLabel = model->trainingLabels.first;
-	fvalue* alphas = model->alphas.data();
-	label_id* labels = model->labels.data();
-	sample_id* samples = model->samples.data();
 	fvalue* kernels = buffer->data;
-	for (sample_id i = 0; i < svNumber; i++) {
-		fvalue yy = (labels[i] == positiveLabel) ? 1.0 : -1.0;
-		dec += yy * alphas[i] * kernels[samples[i]];
+	for (sample_id i = 0; i < model->size; i++) {
+		fvalue yy = (model->labels[i] == positiveLabel) ? 1.0 : -1.0;
+		dec += yy * model->alphas[i] * kernels[model->samples[i]];
 	}
 	return (dec > 0) ? model->trainingLabels.first : model->trainingLabels.second;
 }
@@ -234,19 +230,15 @@ void PairwiseSolver<Kernel, Matrix, Strategy>::train() {
 		this->reset();
 		this->trainForCache(this->cache);
 
-		fvalue* resultAlphas = it->alphas.data();
-		vector<label_id> x(resultAlphas, resultAlphas+6);
-		label_id* resultLabels = it->labels.data();
-		fvalue* cacheAlphas = this->cache->getAlphas()->data;
 		fvalue bias = 0;
+		fvalue* cacheAlphas = this->cache->getAlphas()->data;
 		sample_id* cacheSamples = this->cache->getBackwardOrder();
-		sample_id* resultSamples = it->samples.data();
 		quantity svNumber  = this->cache->getSVNumber();
 		for (quantity i = 0; i < svNumber; i++) {
 			fvalue alpha = cacheAlphas[i];
-			resultAlphas[i] = alpha;
-			resultLabels[i] = this->labels[i];
-			resultSamples[i] = cacheSamples[i];
+			it->alphas[i] = alpha;
+			it->labels[i] = this->labels[i];
+			it->samples[i] = cacheSamples[i];
 			bias += alpha * (this->labels[i] == trainPair.first ? 1.0 : -1.0);
 		}
 		it->bias = bias;
