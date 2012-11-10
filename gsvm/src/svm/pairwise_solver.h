@@ -54,6 +54,7 @@ struct PairwiseTrainingState {
 
 	vector<PairwiseTrainingResult> models;
 	quantity svNumber;
+	quantity labelNumber;
 
 };
 
@@ -98,7 +99,7 @@ PairwiseClassifier<Kernel, Matrix>::~PairwiseClassifier() {
 
 template<typename Kernel, typename Matrix>
 label_id PairwiseClassifier<Kernel, Matrix>::classify(sample_id sample) {
-	vector<quantity> votes(state->models.size(), 0);
+	vector<quantity> votes(state->labelNumber, 0);
 	label_id maxLabelId = 0;
 	quantity maxLabelValue = 0;
 
@@ -210,6 +211,7 @@ PairwiseSolver<Kernel, Matrix, Strategy>::PairwiseSolver(
 			state.models.push_back(PairwiseTrainingResult(labels, size));
 		}
 	}
+	state.labelNumber = maxLabel;
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
@@ -277,13 +279,15 @@ quantity PairwiseSolver<Kernel, Matrix, Strategy>::reorderSamples(
 	id train = 0;
 	id test = size - 1;
 	while (train < test) {
-		while (sampleLabels[train] == first || sampleLabels[train] == second) {
+		while ((sampleLabels[train] == first || sampleLabels[train] == second)
+				&& train < size) {
 			train++;
 		}
 		while (sampleLabels[test] != first && sampleLabels[test] != second) {
 			test--;
 		}
 		if (train < test) {
+			cout << "......." << train << " " << test << endl;
 			this->swapSamples(train++, test--);
 		}
 	}
