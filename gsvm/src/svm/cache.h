@@ -285,6 +285,8 @@ CachedKernelEvaluator<Kernel, Matrix, Strategy>::~CachedKernelEvaluator() {
 	delete [] entries;
 	delete [] alphas;
 	delete [] kernelValues;
+	delete [] forwardOrder;
+	delete [] backwardOrder;
 	fvector_free(fbuffer);
 	fvector_free(probeBuffer);
 }

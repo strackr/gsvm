@@ -116,6 +116,7 @@ private:
 public:
 	BaseSolverFactory(istream& input, TrainParams& params,
 			StopCriterion strategy, MulticlassApproach multiclass, bool reduceDim);
+	virtual ~BaseSolverFactory();
 
 	AbstractSolver<GaussKernel, Matrix, Strategy>* getSolver();
 	CrossValidationSolver<GaussKernel, Matrix, Strategy>* getCrossValidationSolver(
@@ -135,6 +136,11 @@ BaseSolverFactory<Matrix, Strategy>::BaseSolverFactory(istream& input,
 		multiclass(multiclass),
 		reduceDim(reduceDim),
 		matrixBuilder(new FeatureMatrixBuilder<Matrix>()) {
+}
+
+template<typename Matrix, typename Strategy>
+BaseSolverFactory<Matrix, Strategy>::~BaseSolverFactory() {
+	delete matrixBuilder;
 }
 
 template<typename Matrix, typename Strategy>
