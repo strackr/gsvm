@@ -70,6 +70,8 @@ class PairwiseClassifier: public Classifier<Kernel, Matrix> {
 	PairwiseTrainingState* state;
 	fvector *buffer;
 
+	vector<quantity> votes;
+
 protected:
 	label_id classifyForModel(sample_id sample,
 			PairwiseTrainingResult* model, fvector* buffer);
@@ -90,7 +92,8 @@ PairwiseClassifier<Kernel, Matrix>::PairwiseClassifier(
 		PairwiseTrainingState* state, fvector *buffer) :
 		evaluator(evaluator),
 		state(state),
-		buffer(buffer) {
+		buffer(buffer),
+		votes(state->labelNumber, 0) {
 }
 
 template<typename Kernel, typename Matrix>
@@ -99,7 +102,8 @@ PairwiseClassifier<Kernel, Matrix>::~PairwiseClassifier() {
 
 template<typename Kernel, typename Matrix>
 label_id PairwiseClassifier<Kernel, Matrix>::classify(sample_id sample) {
-	vector<quantity> votes(state->labelNumber, 0);
+	fill(votes.begin(), votes.end(), 0);
+
 	label_id maxLabelId = 0;
 	quantity maxLabelValue = 0;
 
