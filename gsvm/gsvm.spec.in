@@ -1,0 +1,32 @@
+Name:           gsvm
+Version:        @VERSION@
+Release:        1%{?dist}
+Summary:        Support Vector Machine solver.
+
+Group:          Applications/Engineering
+License:        AGPLv3+
+URL:            https://github.com/strackr/gsvm
+Source0:        %{name}-%{version}.tar.gz
+BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+
+%description
+Gsvm, a Support Vector Machine solver.
+
+%prep
+%setup
+
+%build
+%configure
+make %{?_smp_mflags}
+
+%check
+make check
+
+%install
+make DESTDIR=%{buildroot} install
+
+%clean
+rm -fr %{buildroot}
+
+%files
+%{_bindir}/gsvm

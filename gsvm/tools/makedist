@@ -1,0 +1,2 @@
+make dist
+rpmbuild -ta gsvm-*.tar.gz

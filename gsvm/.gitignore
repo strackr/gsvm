@@ -13,6 +13,7 @@
 /Makefile
 /Makefile.am
 /Makefile.in
+/gsvm.spec
 /missing
 /stamp-h1
 /.autotools
@@ -23,3 +24,4 @@
 /*.o
 /gsvm
 /gsvmcheck
+/gsvm-*.tar.gz

@@ -1,5 +1,6 @@
 make clean
 rm -fr autom4te.cache aclocal.m4
 rm -f config.h config.h.in config.h.in~ config.log config.status configure
-rm -f Makefile Makefile.in
+rm -f Makefile Makefile.in gsvm.spec
 rm -fr .deps depcomp missing install-sh stamp-h1
+rm gsvm-*.tar.gz
