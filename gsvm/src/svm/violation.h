@@ -72,7 +72,7 @@ inline fvalue ViolationEstimator<IMDM>::evaluateGoodness(fvalue au, fvalue av,
 
 
 inline ViolationEstimator<GMDM>::ViolationEstimator(TrainParams& params) {
-	k = params.gmdm.k;
+	k = params.stopping.k;
 }
 
 inline fvalue ViolationEstimator<GMDM>::evaluateGoodness(fvalue au, fvalue av,

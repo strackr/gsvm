@@ -44,6 +44,7 @@ using namespace boost::program_options;
 #define PR_OUTER_FLD "outer-folds,o"
 #define PR_INNER_FLD "inner-folds,i"
 #define PR_EPSILON "epsilon,e"
+#define PR_ETA "eta,E"
 #define PR_DRAW_NUM "draw-number,d"
 #define PR_INPUT "input,I"
 #define PR_SEL_TYPE "model-selection,m"
@@ -52,6 +53,7 @@ using namespace boost::program_options;
 #define PR_OPTIMIZATION "optimization,z"
 #define PR_ID_RANDOMIZER "randomizer,s"
 #define PR_MULTICLASS "multiclass,u"
+#define PR_CACHE_SIZE "cache-size,S"
 
 #define PR_KEY_HELP "help"
 #define PR_KEY_C_LOW "c-low"
@@ -62,6 +64,7 @@ using namespace boost::program_options;
 #define PR_KEY_OUTER_FLD "outer-folds"
 #define PR_KEY_INNER_FLD "inner-folds"
 #define PR_KEY_EPSILON "epsilon"
+#define PR_KEY_ETA "eta"
 #define PR_KEY_DRAW_NUM "draw-number"
 #define PR_KEY_INPUT "input"
 #define PR_KEY_SEL_TYPE "model-selection"
@@ -70,6 +73,7 @@ using namespace boost::program_options;
 #define PR_KEY_OPTIMIZATION "optimization"
 #define PR_KEY_ID_RANDOMIZER "randomizer"
 #define PR_KEY_MULTICLASS "multiclass"
+#define PR_KEY_CACHE_SIZE "cache-size"
 
 #define SEL_TYPE_GRID "grid"
 #define SEL_TYPE_PATTERN "pattern"

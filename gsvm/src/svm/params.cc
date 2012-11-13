@@ -18,9 +18,11 @@
 
 #include "params.h"
 
-TrainParams::TrainParams(fvalue epsilon, quantity drawNumber, fvalue gmdmk, quantity bucketNumber) :
-		epsilon(epsilon),
-		drawNumber(drawNumber) {
-	gmdm.k = gmdmk;
-	generator.bucketNumber = bucketNumber;
+TrainParams::TrainParams() {
+	epsilon = DEFAULT_EPSILON;
+	eta = DEFAULT_ETA;
+	drawNumber = DEFAULT_DRAW_NUMBER;
+	cache.size = DEFAULT_CACHE_SIZE;
+	stopping.k = DEFAULT_STOPPING_GMDM_K;
+	generator.bucketNumber = DEFAULT_GENERATOR_BUCKET_NUMBER;
 }

@@ -39,11 +39,6 @@
 #define SHRINKING_LEVEL 100
 #define SHRINKING_ITERS 100
 
-#define DEFAULT_C 1.0
-#define DEFAULT_GAMMA 1.0
-
-#define DEFAULT_CACHE_SIZE 16000
-
 // compress thresholds (as in libCVM)
 #define MAX_REFINE_ITER 20
 #define COMPRESS_THRES 400
@@ -278,7 +273,7 @@ CachedKernelEvaluator<Kernel, Matrix, Strategy>* AbstractSolver<Kernel, Matrix, 
 	RbfKernelEvaluator<GaussKernel, Matrix> *rbf = new RbfKernelEvaluator<GaussKernel, Matrix>(
 			this->samples, this->labels, labelNames.size(), c, gparams);
 	return new CachedKernelEvaluator<GaussKernel, Matrix, Strategy>(
-			rbf, &strategy, size, DEFAULT_CACHE_SIZE);
+			rbf, &strategy, size, params.cache.size, params.eta, NULL);
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>

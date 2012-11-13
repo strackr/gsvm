@@ -56,11 +56,16 @@ Configuration ParametersParser::getConfiguration() {
 
 	fvalue epsilon = 0.0;
 	if (vars[PR_KEY_EPSILON].as<string>() != EPSILON_DEFAULT) {
-		istringstream epstr(vars[PR_KEY_EPSILON].as<string>());
-		epstr >> epsilon;
+		istringstream(vars[PR_KEY_EPSILON].as<string>()) >> epsilon;
 	}
+	fvalue eta = vars[PR_KEY_ETA].as<double>();
 	quantity drawNumber = vars[PR_KEY_DRAW_NUM].as<int>();
-	TrainParams params(epsilon, drawNumber);
+	quantity cacheSize = vars[PR_KEY_CACHE_SIZE].as<int>();
+	TrainParams params;
+	params.epsilon = epsilon;
+	params.eta = eta;
+	params.drawNumber = drawNumber;
+	params.cache.size = cacheSize;
 	conf.trainingParams = params;
 
 	string stopStr = vars[PR_KEY_STOP_CRIT].as<string>();

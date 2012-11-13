@@ -31,8 +31,6 @@
 #define STATS(c)
 #endif
 
-#define DEFAULT_ETA 1.0
-
 #define VIOLATOR_DISCARD_PROB 0.5
 #define VIOLATOR_PROBE_SIZE 200
 #define VIOLATOR_MIN_EST_PROP 1.4
@@ -112,8 +110,6 @@ class CachedKernelEvaluator {
 	fvector *fbuffer;
 	fvectorv fbufferView;
 
-	fvector *probeBuffer;
-
 	quantity problemSize;
 	quantity cacheSize;
 	quantity cacheDepth;
@@ -132,10 +128,6 @@ class CachedKernelEvaluator {
 
 	fvalue eta;
 
-	quantity probeSize;
-	quantity minEstimationSize;
-	fvalue discardThreshold;
-
 	RbfKernelEvaluator<Kernel, Matrix> *evaluator;
 	Strategy *strategy;
 
@@ -153,11 +145,13 @@ protected:
 	void resizeCache();
 
 	fvalue evalKernel(sample_id uid, sample_id vid);
-	void evalKernel(sample_id id, sample_id rangeFrom, sample_id rangeTo, fvector *result);
+	void evalKernel(sample_id id, sample_id rangeFrom, sample_id rangeTo,
+			fvector *result);
 
 public:
-	CachedKernelEvaluator(RbfKernelEvaluator<Kernel, Matrix> *evaluator, Strategy *strategy,
-			quantity probSize, quantity cchSize, SwapListener *listener);
+	CachedKernelEvaluator(RbfKernelEvaluator<Kernel, Matrix> *evaluator,
+			Strategy *strategy, quantity probSize, quantity cchSize,
+			fvalue eta, SwapListener *listener);
 	~CachedKernelEvaluator();
 
 	fvalue evalKernelUV(sample_id u, sample_id v);
@@ -198,9 +192,10 @@ public:
 template<typename Kernel, typename Matrix, typename Strategy>
 CachedKernelEvaluator<Kernel, Matrix, Strategy>::CachedKernelEvaluator(
 		RbfKernelEvaluator<Kernel, Matrix> *evaluator, Strategy *strategy,
-		quantity probSize, quantity cchSize, SwapListener *listener = NULL) :
+		quantity probSize, quantity cchSize, fvalue eta, SwapListener *listener) :
 		evaluator(evaluator),
 		strategy(strategy),
+		eta(eta),
 		listener(listener) {
 	problemSize = probSize;
 	cacheSize = cchSize <= probSize ? cchSize : probSize;
@@ -266,13 +261,6 @@ CachedKernelEvaluator<Kernel, Matrix, Strategy>::CachedKernelEvaluator(
 	lruEntry = cacheSize - 1;
 
 	w2 = evaluator->getKernelTau();
-
-	eta = DEFAULT_ETA;
-
-	probeSize = VIOLATOR_PROBE_SIZE;
-	minEstimationSize = VIOLATOR_MIN_EST_PROP * probeSize;
-	probeBuffer = fvector_alloc(probeSize);
-	discardThreshold = gsl_cdf_gaussian_Pinv(VIOLATOR_DISCARD_PROB, 1.0);
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
@@ -288,7 +276,6 @@ CachedKernelEvaluator<Kernel, Matrix, Strategy>::~CachedKernelEvaluator() {
 	delete [] forwardOrder;
 	delete [] backwardOrder;
 	fvector_free(fbuffer);
-	fvector_free(probeBuffer);
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>

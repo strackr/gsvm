@@ -21,29 +21,37 @@
 
 #include "../math/numeric.h"
 
-#define PARAMS_DEFAULT_DRAW_NUMBER 590
-#define PARAMS_DEFAULT_EPSILON 0.001
-#define PARAMS_DEFAULT_GMDM_K 0.5
-#define PARAMS_DEFAULT_GENERATOR_BUCKET 1025
+#define DEFAULT_EPSILON 0.001
+#define DEFAULT_ETA 1.0
+#define DEFAULT_DRAW_NUMBER 590
+
+#define DEFAULT_CACHE_SIZE 16000
+
+#define DEFAULT_STOPPING_GMDM_K 0.5
+
+#define DEFAULT_GENERATOR_BUCKET_NUMBER 1025
 
 struct TrainParams {
 	fvalue epsilon;
+	fvalue eta;
 	quantity drawNumber;
 
-	struct GMDM {
-		fvalue k;
-	} gmdm;
+	struct {
+		quantity size;
+	} cache;
 
-	struct DetermGenerator {
+	struct {
+		// GDMK
+		fvalue k;
+	} stopping;
+
+	struct {
+		// deterministic
 		quantity bucketNumber;
 	} generator;
 
-	TrainParams(fvalue epsilon = PARAMS_DEFAULT_EPSILON,
-			quantity drawNumber = PARAMS_DEFAULT_DRAW_NUMBER,
-			fvalue gmdmk = PARAMS_DEFAULT_GMDM_K,
-			quantity bucketNumber = PARAMS_DEFAULT_GENERATOR_BUCKET);
+	TrainParams();
 
 };
-
 
 #endif

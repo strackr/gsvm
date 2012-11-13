@@ -48,6 +48,7 @@ int main(int argc, char *argv[]) {
 		(PR_OUTER_FLD, value<int>()->default_value(1), "outer folds")
 		(PR_INNER_FLD, value<int>()->default_value(10), "inner folds")
 		(PR_EPSILON, value<string>()->default_value(EPSILON_DEFAULT), "epsilon value")
+		(PR_ETA, value<fvalue>()->default_value(DEFAULT_ETA), "eta value")
 		(PR_DRAW_NUM, value<int>()->default_value(600), "draw number")
 		(PR_MULTICLASS, value<string>()->default_value(MULTICLASS_ALL_AT_ONCE), "multiclass training approach (allatonce or pairwise)")
 		(PR_SEL_TYPE, value<string>()->default_value(SEL_TYPE_PATTERN), "model selection type (grid or pattern)")
@@ -55,6 +56,7 @@ int main(int argc, char *argv[]) {
 		(PR_STOP_CRIT, value<string>()->default_value(STOP_CRIT_ADJMN), "stopping criterion (adjmn, mn or meb)")
 		(PR_OPTIMIZATION, value<string>()->default_value(OPTIMIZATION_MDM), "optimization strategy (mdm or imdm)")
 		(PR_ID_RANDOMIZER, value<string>()->default_value(ID_RANDOMIZER_FAIR), "id generator (simple, fair or determ)")
+		(PR_CACHE_SIZE, value<int>()->default_value(DEFAULT_CACHE_SIZE), "cache size")
 		(PR_INPUT, value<string>(), "input file");
 
 	positional_options_description opt;
