@@ -68,10 +68,12 @@ class PairwiseClassifier: public Classifier<Kernel, Matrix> {
 	fvector *buffer;
 
 	vector<quantity> votes;
+	vector<fvalue> evidence;
 
 protected:
-	label_id classifyForModel(sample_id sample,
+	fvalue getDecisionForModel(sample_id sample,
 			PairwiseTrainingResult* model, fvector* buffer);
+	fvalue convertDecisionToEvidence(fvalue decision);
 
 public:
 	PairwiseClassifier(RbfKernelEvaluator<Kernel, Matrix> *evaluator,
@@ -90,7 +92,8 @@ PairwiseClassifier<Kernel, Matrix>::PairwiseClassifier(
 		evaluator(evaluator),
 		state(state),
 		buffer(buffer),
-		votes(state->labelNumber, 0) {
+		votes(state->labelNumber),
+		evidence(state->labelNumber){
 }
 
 template<typename Kernel, typename Matrix>
@@ -100,27 +103,40 @@ PairwiseClassifier<Kernel, Matrix>::~PairwiseClassifier() {
 template<typename Kernel, typename Matrix>
 label_id PairwiseClassifier<Kernel, Matrix>::classify(sample_id sample) {
 	fill(votes.begin(), votes.end(), 0);
-
-	label_id maxLabelId = 0;
-	quantity maxLabelValue = 0;
+	fill(evidence.begin(), evidence.end(), 0.0);
 
 	evaluator->evalInnerKernel(sample, 0, state->svNumber, buffer);
 
 	vector<PairwiseTrainingResult>::iterator it;
 	for (it = state->models.begin(); it != state->models.end(); it++) {
 		PairwiseTrainingResult* result = it.base();
-		label_id label = classifyForModel(sample, result, buffer);
+		fvalue dec = getDecisionForModel(sample, result, buffer);
+		label_id label = dec > 0
+				? result->trainingLabels.first
+				: result->trainingLabels.second;
 		votes[label]++;
-		if (votes[label] > maxLabelValue) {
-			maxLabelId = label;
-			maxLabelValue = votes[label];
+		fvalue evidValue = convertDecisionToEvidence(dec);
+		evidence[result->trainingLabels.first] += evidValue;
+		evidence[result->trainingLabels.second] += evidValue;
+	}
+
+	label_id maxLabelId = 0;
+	quantity maxVotes = 0;
+	quantity maxEvidence = 0.0;
+	for (label_id i = 0; i < state->labelNumber; i++) {
+		if (votes[i] > maxVotes
+			|| (votes[i] == maxVotes && evidence[i] > maxEvidence)) {
+			maxLabelId = i;
+			maxVotes = votes[i];
+			maxEvidence = evidence[i];
 		}
 	}
+
 	return maxLabelId;
 }
 
 template<typename Kernel, typename Matrix>
-label_id PairwiseClassifier<Kernel, Matrix>::classifyForModel(sample_id sample,
+fvalue PairwiseClassifier<Kernel, Matrix>::getDecisionForModel(sample_id sample,
 		PairwiseTrainingResult* model, fvector* buffer) {
 	fvalue dec = model->bias;
 	label_id positiveLabel = model->trainingLabels.first;
@@ -128,7 +144,13 @@ label_id PairwiseClassifier<Kernel, Matrix>::classifyForModel(sample_id sample,
 	for (sample_id i = 0; i < model->size; i++) {
 		dec += model->yalphas[i] * kernels[model->samples[i]];
 	}
-	return (dec > 0) ? model->trainingLabels.first : model->trainingLabels.second;
+	return dec;
+}
+
+template<typename Kernel, typename Matrix>
+inline fvalue PairwiseClassifier<Kernel, Matrix>::convertDecisionToEvidence(
+		fvalue decision) {
+	return decision;
 }
 
 template<typename Kernel, typename Matrix>
