@@ -25,25 +25,22 @@
 struct PairwiseTrainingResult {
 
 	pair<label_id, label_id> trainingLabels;
-	vector<fvalue> alphas;
+	vector<fvalue> yalphas;
 	fvalue bias;
-	vector<label_id> labels;
 	vector<sample_id> samples;
 	quantity size;
 
 	PairwiseTrainingResult(pair<label_id, label_id>& trainingLabels, quantity size) :
 			trainingLabels(trainingLabels),
-			alphas(vector<fvalue>(size, 0.0)),
+			yalphas(vector<fvalue>(size, 0.0)),
 			bias(0),
-			labels(vector<label_id>(size, INVALID_LABEL_ID)),
 			samples(vector<sample_id>(size, INVALID_SAMPLE_ID)),
 			size(0) {
 	}
 
 	void clear() {
-		alphas.clear();
+		yalphas.clear();
 		bias = 0;
-		labels.clear();
 		samples.clear();
 	}
 
@@ -125,12 +122,11 @@ label_id PairwiseClassifier<Kernel, Matrix>::classify(sample_id sample) {
 template<typename Kernel, typename Matrix>
 label_id PairwiseClassifier<Kernel, Matrix>::classifyForModel(sample_id sample,
 		PairwiseTrainingResult* model, fvector* buffer) {
-	fvalue dec = 0.0;
+	fvalue dec = model->bias;
 	label_id positiveLabel = model->trainingLabels.first;
 	fvalue* kernels = buffer->data;
 	for (sample_id i = 0; i < model->size; i++) {
-		fvalue yy = (model->labels[i] == positiveLabel) ? 1.0 : -1.0;
-		dec += yy * model->alphas[i] * kernels[model->samples[i]];
+		dec += model->yalphas[i] * kernels[model->samples[i]];
 	}
 	return (dec > 0) ? model->trainingLabels.first : model->trainingLabels.second;
 }
@@ -235,11 +231,11 @@ void PairwiseSolver<Kernel, Matrix, Strategy>::train() {
 		sample_id* cacheSamples = this->cache->getBackwardOrder();
 		quantity svNumber  = this->cache->getSVNumber();
 		for (quantity i = 0; i < svNumber; i++) {
-			fvalue alpha = cacheAlphas[i];
-			it->alphas[i] = alpha;
-			it->labels[i] = this->labels[i];
+			fvalue yy = this->labels[i] == trainPair.first ? 1.0 : -1.0;
+			fvalue yalpha = yy * cacheAlphas[i];
+			it->yalphas[i] = yalpha;
 			it->samples[i] = cacheSamples[i];
-			bias += alpha * (this->labels[i] == trainPair.first ? 1.0 : -1.0);
+			bias += yalpha;
 		}
 		it->bias = bias;
 		it->size = svNumber;
