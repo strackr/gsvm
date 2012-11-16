@@ -50,8 +50,8 @@ void ClassDistribution::refresh(label_id* smplMemb, quantity smplNum) {
 	for (quantity i = 0; i < smplNum; i++) {
 		label_id label = smplMemb[i];
 		buffers[label][bufferSizes[label]] = i;
+		offsets[i] = (buffers[label] - bufferHolder.data()) + bufferSizes[label];
 		bufferSizes[label]++;
-		offsets[i] = buffers[label] - bufferHolder.data();
 	}
 	id currentLabel = 0;
 	for (quantity i = 0; i < maxLabelNumber; i++) {
