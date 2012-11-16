@@ -180,6 +180,10 @@ class PairwiseSolver: public AbstractSolver<Kernel, Matrix, Strategy> {
 	quantity reorderSamples(label_id *labels, quantity size,
 			pair<label_id, label_id>& labelPair);
 
+protected:
+	CachedKernelEvaluator<Kernel, Matrix, Strategy>* buildCache(
+			fvalue c, Kernel &gparams);
+
 public:
 	PairwiseSolver(map<label_id, string> labelNames, Matrix *samples,
 			label_id *labels, TrainParams &params,
@@ -299,6 +303,15 @@ quantity PairwiseSolver<Kernel, Matrix, Strategy>::reorderSamples(
 		}
 	}
 	return train;
+}
+
+template<typename Kernel, typename Matrix, typename Strategy>
+CachedKernelEvaluator<Kernel, Matrix, Strategy>* PairwiseSolver<Kernel, Matrix, Strategy>::buildCache(
+		fvalue c, Kernel &gparams) {
+	RbfKernelEvaluator<GaussKernel, Matrix> *rbf = new RbfKernelEvaluator<GaussKernel, Matrix>(
+			this->samples, this->labels, 2, c, gparams);
+	return new CachedKernelEvaluator<GaussKernel, Matrix, Strategy>(
+			rbf, &this->strategy, this->size, this->params.cache.size, this->params.eta, NULL);
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>

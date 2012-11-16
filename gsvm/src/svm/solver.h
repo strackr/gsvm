@@ -121,7 +121,7 @@ protected:
 protected:
 	sample_id findMinNormViolator(fvalue threshold);
 
-	CachedKernelEvaluator<Kernel, Matrix, Strategy>* buildCache(
+	virtual CachedKernelEvaluator<Kernel, Matrix, Strategy>* buildCache(
 			fvalue c, Kernel &gparams);
 
 	void trainForCache(CachedKernelEvaluator<Kernel, Matrix, Strategy> *cache);
