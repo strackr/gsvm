@@ -177,8 +177,8 @@ class PairwiseSolver: public AbstractSolver<Kernel, Matrix, Strategy> {
 
 	PairwiseTrainingState state;
 
-	quantity reorderSamples(label_id *sampleLabels, quantity size,
-			pair<label_id, label_id>& labels);
+	quantity reorderSamples(label_id *labels, quantity size,
+			pair<label_id, label_id>& labelPair);
 
 public:
 	PairwiseSolver(map<label_id, string> labelNames, Matrix *samples,
@@ -282,17 +282,16 @@ void PairwiseSolver<Kernel, Matrix, Strategy>::train() {
 
 template<typename Kernel, typename Matrix, typename Strategy>
 quantity PairwiseSolver<Kernel, Matrix, Strategy>::reorderSamples(
-		label_id *sampleLabels, quantity size, pair<label_id, label_id>& labels) {
-	label_id first = labels.first;
-	label_id second = labels.second;
+		label_id *labels, quantity size, pair<label_id, label_id>& labelPair) {
+	label_id first = labelPair.first;
+	label_id second = labelPair.second;
 	id train = 0;
 	id test = size - 1;
-	while (train < test) {
-		while ((sampleLabels[train] == first || sampleLabels[train] == second)
-				&& train < size) {
+	while (train <= test) {
+		while (train < size && (labels[train] == first || labels[train] == second)) {
 			train++;
 		}
-		while (sampleLabels[test] != first && sampleLabels[test] != second) {
+		while (test >= 0 && (labels[test] != first && labels[test] != second)) {
 			test--;
 		}
 		if (train < test) {

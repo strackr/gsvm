@@ -205,11 +205,11 @@ void CrossValidationSolver<Kernel, Matrix, Strategy>::sortVectors(
 		fold_id *membership, fold_id fold, quantity num) {
 	id train = 0;
 	id test = num - 1;
-	while (train < test) {
-		while (membership[train] != fold) {
+	while (train <= test) {
+		while (train < num && membership[train] != fold) {
 			train++;
 		}
-		while (membership[test] == fold) {
+		while (test >= 0 && membership[test] == fold) {
 			test--;
 		}
 		if (train < test) {
