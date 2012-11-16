@@ -36,7 +36,7 @@ ClassDistribution::ClassDistribution(quantity labelNum,
 	}
 	buffers[0] = bufferHolder.data();
 	for (quantity i = 1; i < labelNum; i++) {
-		buffers[i] = bufferHolder.data() + bufferSizes[i - 1];
+		buffers[i] = buffers[i - 1] + bufferSizes[i - 1];
 	}
 }
 
