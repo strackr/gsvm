@@ -256,18 +256,23 @@ void PairwiseSolver<Kernel, Matrix, Strategy>::train() {
 		fvalue* cacheAlphas = this->cache->getAlphas()->data;
 		sample_id* cacheSamples = this->cache->getBackwardOrder();
 		quantity svNumber  = this->cache->getSVNumber();
+		sample_id currentSv = 0;
 		for (quantity i = 0; i < svNumber; i++) {
-			fvalue yy = this->labels[i] == trainPair.first ? 1.0 : -1.0;
-			fvalue yalpha = yy * cacheAlphas[i];
-			it->yalphas[i] = yalpha;
-			it->samples[i] = cacheSamples[i];
-			bias += yalpha;
+			fvalue alpha = cacheAlphas[i];
+			if (alpha != 0.0) {
+				fvalue yy = this->labels[i] == trainPair.first ? 1.0 : -1.0;
+				fvalue yalpha = yy * alpha;
+				it->yalphas[currentSv] = yalpha;
+				it->samples[currentSv] = cacheSamples[i];
+				bias += yalpha;
+				currentSv++;
+			}
 		}
 		it->bias = bias;
-		it->size = svNumber;
+		it->size = currentSv;
 	}
 
-	id freeOffset = state.models.back().size;
+	id freeOffset = 0;
 	sample_id* mapping = this->cache->getForwardOrder();
 	for (it = state.models.begin(); it != state.models.end(); it++) {
 		for (id i = 0; i < it->size; i++) {
