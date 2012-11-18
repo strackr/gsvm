@@ -126,10 +126,10 @@ class CachedKernelEvaluator {
 
 	fvalue w2;
 
-	fvalue eta;
-
 	RbfKernelEvaluator<Kernel, Matrix> *evaluator;
 	Strategy *strategy;
+
+	fvalue eta;
 
 	SwapListener *listener;
 
@@ -168,7 +168,7 @@ public:
 
 	void performUpdate(sample_id u, sample_id v);
 	fvalue getWNorm();
-	bool performSvUpdate(fvalue threshold, quantity minViol);
+	void performSvUpdate();
 
 	void setSwapListener(SwapListener *listener);
 	void swapSamples(sample_id u, sample_id v);
@@ -687,13 +687,12 @@ inline fvalue CachedKernelEvaluator<Kernel, Matrix, Strategy>::getWNorm() {
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-inline bool CachedKernelEvaluator<Kernel, Matrix, Strategy>::performSvUpdate(fvalue threshold, quantity minViol) {
+void CachedKernelEvaluator<Kernel, Matrix, Strategy>::performSvUpdate() {
 	fvalue minKernel = MAX_FVALUE;
 	sample_id minIdx = INVALID_SAMPLE_ID;
 	fvalue maxKernel = -MAX_FVALUE;
 	sample_id maxIdx = INVALID_SAMPLE_ID;
 
-	quantity violator = 0;
 	fvalue *kptr = kernelValues;
 	for (sample_id i = 0; i < svnumber; i++) {
 		fvalue kernel = *kptr++;
@@ -707,17 +706,10 @@ inline bool CachedKernelEvaluator<Kernel, Matrix, Strategy>::performSvUpdate(fva
 			minKernel = kernel;
 			minIdx = i;
 		}
-		if (kernel < threshold) {
-			violator++;
-		}
 	}
-
-	bool update = false;
-	if (violator > minViol && minIdx != maxIdx) {
+	if (minIdx != maxIdx) {
 		performUpdate(maxIdx, minIdx);
-		update = true;
 	}
-	return update;
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>

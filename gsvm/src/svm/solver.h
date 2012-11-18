@@ -36,12 +36,7 @@
 #define STARTING_EPSILON 1.0
 #define EPSILON_SHRINKING_FACTOR 2.0
 
-#define SHRINKING_LEVEL 100
-#define SHRINKING_ITERS 100
-
-// compress thresholds (as in libCVM)
-#define MAX_REFINE_ITER 20
-#define COMPRESS_THRES 400
+#define CACHE_USAGE_RATIO 0.1
 
 using namespace std;
 
@@ -96,6 +91,18 @@ public:
 };
 
 
+struct ViolatorSearch {
+
+	sample_id violator;
+	quantity attempt;
+
+	ViolatorSearch(sample_id violator, quantity attempt) :
+		violator(violator),
+		attempt(attempt) {
+	}
+
+};
+
 template<typename Kernel, typename Matrix, typename Strategy>
 class AbstractSolver: public Solver<Kernel, Matrix>, public StateHolder<Matrix> {
 
@@ -119,7 +126,7 @@ protected:
 	CachedKernelEvaluator<Kernel, Matrix, Strategy> *cache;
 
 protected:
-	sample_id findMinNormViolator(fvalue threshold);
+	ViolatorSearch findMinNormViolator(fvalue threshold);
 
 	virtual CachedKernelEvaluator<Kernel, Matrix, Strategy>* buildCache(
 			fvalue c, Kernel &gparams);
@@ -162,12 +169,12 @@ AbstractSolver<Kernel, Matrix, Strategy>::AbstractSolver(
 		map<label_id, string> labelNames, Matrix *samples,
 		label_id *labels, TrainParams &params,
 		StopCriterionStrategy *stopStrategy) :
+		params(params),
+		stopStrategy(stopStrategy),
 		labelNames(labelNames),
 		samples(samples),
 		labels(labels),
-		strategy(Strategy(params, labelNames.size(), labels, samples->height)),
-		params(params),
-		stopStrategy(stopStrategy) {
+		strategy(Strategy(params, labelNames.size(), labels, samples->height)) {
 	size = samples->height;
 	currentSize = samples->height;
 	dimension = samples->width;
@@ -200,19 +207,20 @@ void AbstractSolver<Kernel, Matrix, Strategy>::setKernelParams(
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-sample_id AbstractSolver<Kernel, Matrix, Strategy>::findMinNormViolator(
+ViolatorSearch AbstractSolver<Kernel, Matrix, Strategy>::findMinNormViolator(
 		fvalue threshold) {
-	quantity attempt = 0;
-	while (attempt < params.drawNumber) {
+	ViolatorSearch result(INVALID_SAMPLE_ID, 0);
+	while (result.attempt < params.drawNumber) {
 		sample_id violator = strategy.generateNextId();
 		if (cache->checkViolation(violator, threshold)) {
 			strategy.markGeneratedIdAsCorrect();
-			return violator;
+			result.violator = violator;
+			return result;
 		}
 		strategy.markGeneratedIdAsFailed();
-		attempt++;
+		result.attempt++;
 	}
-	return INVALID_ID;
+	return result;
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
@@ -223,7 +231,7 @@ void AbstractSolver<Kernel, Matrix, Strategy>::reportStatistics() {
 template<typename Kernel, typename Matrix, typename Strategy>
 void AbstractSolver<Kernel, Matrix, Strategy>::trainForCache(
 		CachedKernelEvaluator<Kernel, Matrix, Strategy> *cache) {
-	sample_id mnviol = INVALID_ID;
+	ViolatorSearch mnviol(INVALID_SAMPLE_ID, 0);
 	fvalue tau = cache->getTau();
 	fvalue finalEpsilon = params.epsilon;
 	if (finalEpsilon <= 0) {
@@ -231,7 +239,6 @@ void AbstractSolver<Kernel, Matrix, Strategy>::trainForCache(
 				cache->getTau(), cache->getC());
 	}
 	fvalue epsilon = STARTING_EPSILON;
-//	quantity minVal = currentSize / SHRINKING_LEVEL;
 	do {
 		epsilon /= EPSILON_SHRINKING_FACTOR;
 		if (epsilon < finalEpsilon) {
@@ -243,27 +250,17 @@ void AbstractSolver<Kernel, Matrix, Strategy>::trainForCache(
 			fvalue threshold = stopStrategy->getThreshold(
 					cache->getWNorm(), tau, epsilon);
 			mnviol = findMinNormViolator(threshold);
-			if (mnviol != INVALID_ID) {
-				sample_id kktviol = cache->findMaxSVKernelVal(mnviol);
+			if (mnviol.violator != INVALID_ID) {
+				sample_id kktviol = cache->findMaxSVKernelVal(mnviol.violator);
 
-				cache->performUpdate(kktviol, mnviol);
+				cache->performUpdate(kktviol, mnviol.violator);
 			}
 
-			// shrinking
-			if (cache->getSVNumber() > COMPRESS_THRES) {
-				for (int i = 0; i < MAX_REFINE_ITER; i++) {
-					cache->performSvUpdate(tau, 0);
-				}
+			// additional tuning (in order to increase cache usage ratio)
+			for (int i = 0; i < CACHE_USAGE_RATIO * mnviol.attempt; i++) {
+				cache->performSvUpdate();
 			}
-
-//			// TODO improve shrinking procedure
-//			fvalue threshold;
-//			quantity iter = 0;
-//			do {
-//				threshold = stopStrategy->getThreshold(cache->getWNorm(), cache->getTau(), currentEpsilon);
-//				iter++;
-//			} while (cache->performSvUpdate(threshold, minVal) && iter < SHRINKING_ITERS);
-		} while (mnviol != INVALID_ID);
+		} while (mnviol.violator != INVALID_ID);
 	} while (epsilon > finalEpsilon);
 }
 

@@ -139,7 +139,6 @@ template<typename Kernel, typename Matrix>
 fvalue PairwiseClassifier<Kernel, Matrix>::getDecisionForModel(sample_id sample,
 		PairwiseTrainingResult* model, fvector* buffer) {
 	fvalue dec = model->bias;
-	label_id positiveLabel = model->trainingLabels.first;
 	fvalue* kernels = buffer->data;
 	for (sample_id i = 0; i < model->size; i++) {
 		dec += model->yalphas[i] * kernels[model->samples[i]];
