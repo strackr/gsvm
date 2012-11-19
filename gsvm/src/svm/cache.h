@@ -38,6 +38,8 @@
 #define INITIAL_CACHE_DEPTH 1024
 #define INITIAL_ID 0
 
+#define CACHE_DENSITY_RATIO 0.1
+
 typedef sample_id row_id;
 
 typedef short_id fold_id;
@@ -106,6 +108,7 @@ class CachedKernelEvaluator {
 	fvalue *alphas;
 	fvectorv alphasView;
 	quantity svnumber;
+	quantity psvnumber;
 
 	fvector *fbuffer;
 	fvectorv fbufferView;
@@ -212,6 +215,7 @@ CachedKernelEvaluator<Kernel, Matrix, Strategy>::CachedKernelEvaluator(
 	alphas[0] = 1.0;
 	kernelValues[0] = evaluator->getKernelTau();
 	svnumber = 1;
+	psvnumber = 1;
 	alphasView = fvectorv_array(alphas, svnumber);
 	kernelValuesView = fvectorv_array(kernelValues, svnumber);
 
@@ -477,6 +481,7 @@ void CachedKernelEvaluator<Kernel, Matrix, Strategy>::shrink() {
 		}
 
 		svnumber -= nonsvnumber;
+		psvnumber = svnumber;
 		alphasView.vector.size -= nonsvnumber;
 		kernelValuesView.vector.size -= nonsvnumber;
 	}
@@ -536,6 +541,7 @@ void CachedKernelEvaluator<Kernel, Matrix, Strategy>::performUpdate(sample_id u,
 
 		// adjust sv number
 		svnumber++;
+		psvnumber++;
 		alphasView.vector.size++;
 		kernelValuesView.vector.size++;
 	}
@@ -543,6 +549,7 @@ void CachedKernelEvaluator<Kernel, Matrix, Strategy>::performUpdate(sample_id u,
 	fvalue au = alphas[u];
 	if (beta > au) {
 		beta = au;
+		psvnumber--;
 	}
 
 	updateKernelValues(u, v, beta);
@@ -552,10 +559,12 @@ void CachedKernelEvaluator<Kernel, Matrix, Strategy>::performUpdate(sample_id u,
 	alphas[u] -= beta;
 
 	if (svnumber >= cacheDepth) {
-//		cout << "resizing the cache (SV#: "<< svnumber << ")" << endl;
 		resizeCache();
 	}
-	//	structureCheck();
+
+	if (svnumber - psvnumber > CACHE_DENSITY_RATIO * svnumber) {
+		shrink();
+	}
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
@@ -642,6 +651,7 @@ void CachedKernelEvaluator<Kernel, Matrix, Strategy>::reset() {
 	}
 	alphas[INITIAL_ID] = 1.0;
 	svnumber = 1;
+	psvnumber = 1;
 	alphasView = fvectorv_array(alphas, svnumber);
 
 	// initialize kernelvalues cache
