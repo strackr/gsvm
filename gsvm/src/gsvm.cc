@@ -62,25 +62,30 @@ int main(int argc, char *argv[]) {
 	positional_options_description opt;
 	opt.add(PR_KEY_INPUT, -1);
 
-	variables_map vars;
-	store(command_line_parser(argc, argv).
+	try {
+		variables_map vars;
+		store(command_line_parser(argc, argv).
 	          options(desc).positional(opt).run(), vars);
-	notify(vars);
+		notify(vars);
 
-	if (!vars.count(PR_KEY_HELP)) {
-		try {
-			ParametersParser parser(vars);
-			Configuration conf = parser.getConfiguration();
+		if (!vars.count(PR_KEY_HELP)) {
+			try {
+				ParametersParser parser(vars);
+				Configuration conf = parser.getConfiguration();
 
-			logger << vars;
+				logger << vars;
 
-			ApplicationLauncher launcher(conf);
-			launcher.launch();
-		} catch (InvalidConfigurationException &e) {
-			cerr << e.getMessage() << endl;
+				ApplicationLauncher launcher(conf);
+				launcher.launch();
+			} catch (InvalidConfigurationException &e) {
+				cerr << e.getMessage() << endl;
+				cerr << desc;
+			}
+		} else {
 			cerr << desc;
 		}
-	} else {
+	} catch (exception& e) {
+		cerr << e.what() << "\n" << endl;
 		cerr << desc;
 	}
 	return 0;
