@@ -28,7 +28,7 @@ void ApplicationLauncher::selectMatrixTypeAndRun() {
 		selectViolationCriterionAndRun<dfmatrix>();
 		break;
 	default:
-		throw InvalidConfigurationException("unknown matrix type");
+		throw invalid_configuration("unknown matrix type");
 	}
 }
 

@@ -69,18 +69,13 @@ int main(int argc, char *argv[]) {
 		notify(vars);
 
 		if (!vars.count(PR_KEY_HELP)) {
-			try {
-				ParametersParser parser(vars);
-				Configuration conf = parser.getConfiguration();
+			ParametersParser parser(vars);
+			Configuration conf = parser.getConfiguration();
 
-				logger << vars;
+			logger << vars;
 
-				ApplicationLauncher launcher(conf);
-				launcher.launch();
-			} catch (InvalidConfigurationException &e) {
-				cerr << e.getMessage() << endl;
-				cerr << desc;
-			}
+			ApplicationLauncher launcher(conf);
+			launcher.launch();
 		} else {
 			cerr << desc;
 		}

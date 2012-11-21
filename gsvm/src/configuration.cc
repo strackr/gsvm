@@ -19,11 +19,14 @@
 #include "configuration.h"
 
 
-InvalidConfigurationException::InvalidConfigurationException(string message) : message(message) {
+invalid_configuration::invalid_configuration(string message) : message(message) {
 }
 
-string InvalidConfigurationException::getMessage() {
-	return message;
+invalid_configuration::~invalid_configuration() throw () {
+}
+
+const char* invalid_configuration::what() const throw() {
+	return message.c_str();
 }
 
 
@@ -39,10 +42,10 @@ Configuration ParametersParser::getConfiguration() {
 		ifstream dataStream(conf.dataFile.c_str());
 		if (!dataStream) {
 			string msg = (format("input file '%s' does not exist") % conf.dataFile).str();
-			throw InvalidConfigurationException(msg);
+			throw invalid_configuration(msg);
 		}
 	} else {
-		throw InvalidConfigurationException("input file not specified");
+		throw invalid_configuration("input file not specified");
 	}
 
 	SearchRange range;
@@ -77,7 +80,7 @@ Configuration ParametersParser::getConfiguration() {
 	} else if (STOP_CRIT_MEB == stopStr) {
 		stop = MEB;
 	} else {
-		throw InvalidConfigurationException("invalid stopping criterion: " + stopStr);
+		throw invalid_configuration("invalid stopping criterion: " + stopStr);
 	}
 	conf.stopCriterion = stop;
 
@@ -91,7 +94,7 @@ Configuration ParametersParser::getConfiguration() {
 		conf.matrixType = DENSE;
 	} else {
 		string msg = (format("invalid matrix type: '%s'") % matrix).str();
-		throw InvalidConfigurationException(msg);
+		throw invalid_configuration(msg);
 	}
 
 	string optimization = vars[PR_KEY_OPTIMIZATION].as<string>();
@@ -103,7 +106,7 @@ Configuration ParametersParser::getConfiguration() {
 		conf.optimizationProcedure = GMDM;
 	} else {
 		string msg = (format("invalid optimization criterion: '%s'") % optimization).str();
-		throw InvalidConfigurationException(msg);
+		throw invalid_configuration(msg);
 	}
 
 	string random = vars[PR_KEY_ID_RANDOMIZER].as<string>();
@@ -115,7 +118,7 @@ Configuration ParametersParser::getConfiguration() {
 		conf.randomization = DETERMINISTIC;
 	} else {
 		string msg = (format("invalid randomization type: '%s'") % random).str();
-		throw InvalidConfigurationException(msg);
+		throw invalid_configuration(msg);
 	}
 
 	string multiclass = vars[PR_KEY_MULTICLASS].as<string>();
@@ -125,7 +128,7 @@ Configuration ParametersParser::getConfiguration() {
 		conf.multiclass = PAIRWISE;
 	} else {
 		string msg = (format("invalid multiclass approach: '%s'") % multiclass).str();
-		throw InvalidConfigurationException(msg);
+		throw invalid_configuration(msg);
 	}
 
 	string modelSelection = vars[PR_KEY_SEL_TYPE].as<string>();
@@ -135,7 +138,7 @@ Configuration ParametersParser::getConfiguration() {
 		conf.validation.modelSelection = PATTERN;
 	} else {
 		string msg = (format("invalid model selection type: '%s'") % modelSelection).str();
-		throw InvalidConfigurationException(msg);
+		throw invalid_configuration(msg);
 	}
 
 	return conf;

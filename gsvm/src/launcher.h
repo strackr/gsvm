@@ -227,7 +227,7 @@ void ApplicationLauncher::selectGeneratorTypeAndRun() {
 		run<Matrix, Violation, DETERMINISTIC>();
 		break;
 	default:
-		throw InvalidConfigurationException("unknown randomization type");
+		throw invalid_configuration("unknown randomization type");
 	}
 }
 
@@ -244,7 +244,7 @@ void ApplicationLauncher::selectViolationCriterionAndRun() {
 		selectGeneratorTypeAndRun<Matrix, GMDM>();
 		break;
 	default:
-		throw InvalidConfigurationException("unknown optimization criterion");
+		throw invalid_configuration("unknown optimization criterion");
 	}
 }
 

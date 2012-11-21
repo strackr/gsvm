@@ -99,14 +99,18 @@ using namespace boost::program_options;
 #define MULTICLASS_PAIRWISE "pairwise"
 
 
-class InvalidConfigurationException {
+/**
+ * Exception representing configuration error (like invalid program options).
+ */
+class invalid_configuration: public exception {
 
 	string message;
 
 public:
-	InvalidConfigurationException(string message);
+	invalid_configuration(string message);
+	virtual ~invalid_configuration() throw();
 
-	string getMessage();
+	virtual const char* what() const throw();
 
 };
 
