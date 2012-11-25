@@ -200,11 +200,11 @@ CachedKernelEvaluator<Kernel, Matrix, Strategy>::CachedKernelEvaluator(
 		eta(eta),
 		listener(listener) {
 	problemSize = probSize;
-	quantity mb = 1024 * 1024;
-	cacheSize = max(cchSize * mb, (quantity) (2 * probSize * sizeof(fvalue)));
-	cacheDepth = INITIAL_CACHE_DEPTH;
-	cacheLines = cacheSize / cacheDepth;
-	cache = new fvalue[cacheLines * cacheDepth];
+	quantity fvaluePerMb = 1024 * 1024 / sizeof(fvalue);
+	cacheSize = max(cchSize * fvaluePerMb, 2 * probSize);
+	cacheDepth = min((quantity) INITIAL_CACHE_DEPTH, probSize);
+	cacheLines = min(cacheSize / cacheDepth, probSize);
+	cache = new fvalue[cacheSize];
 
 	// initialize alphas and kernel values
 	alphas = new fvalue[problemSize];
@@ -414,8 +414,8 @@ void CachedKernelEvaluator<Kernel, Matrix, Strategy>::refreshEntry(sample_id v) 
 template<typename Kernel, typename Matrix, typename Strategy>
 void CachedKernelEvaluator<Kernel, Matrix, Strategy>::resizeCache() {
 	quantity newCacheDepth = CACHE_DEPTH_INCREASE * cacheDepth;
-	quantity newCacheLines = cacheSize / newCacheDepth;
-	fvalue *newCache = new fvalue[newCacheLines * newCacheDepth];
+	quantity newCacheLines = min(cacheSize / newCacheDepth, problemSize);
+	fvalue *newCache = new fvalue[cacheSize];
 
 	CacheEntry &lastInvalid = entries[lruEntry];
 
@@ -437,28 +437,31 @@ void CachedKernelEvaluator<Kernel, Matrix, Strategy>::resizeCache() {
 		entry = current.prev;
 	}
 
-	CacheEntry &firstInvalid = entries[entry];
-	CacheEntry &lastValid = entries[firstInvalid.next];
+	if (newCacheLines < cacheLines) {
+		CacheEntry &firstInvalid = entries[entry];
+		CacheEntry &lastValid = entries[firstInvalid.next];
 
-	for (quantity i = newCacheLines; i < cacheLines; i++) {
-		CacheEntry& current = entries[entry];
+		for (quantity i = newCacheLines; i < cacheLines; i++) {
+			CacheEntry& current = entries[entry];
 
-		EntryMapping &mapping = mappings[current.mapping];
-		mapping.cacheEntry = INVALID_ENTRY_ID;
+			EntryMapping &mapping = mappings[current.mapping];
+			mapping.cacheEntry = INVALID_ENTRY_ID;
 
-		entry = current.prev;
+			entry = current.prev;
+		}
+
+		CacheEntry &firstValid = entries[lastInvalid.prev];
+
+		lastValid.prev = lastInvalid.prev;
+		firstValid.next = firstInvalid.next;
+		lruEntry = firstInvalid.next;
+
+		cacheLines = newCacheLines;
 	}
-
-	CacheEntry &firstValid = entries[lastInvalid.prev];
-
-	lastValid.prev = lastInvalid.prev;
-	firstValid.next = firstInvalid.next;
-	lruEntry = firstInvalid.next;
 
 	delete [] cache;
 	cache = newCache;
 	cacheDepth = newCacheDepth;
-	cacheLines = newCacheLines;
 
 	//	shrink();
 }
@@ -579,15 +582,15 @@ void CachedKernelEvaluator<Kernel, Matrix, Strategy>::performUpdate(sample_id u,
 		psvnumber--;
 	}
 
+	if (svnumber > cacheDepth) {
+		resizeCache();
+	}
+
 	updateKernelValues(u, v, beta);
 	w2 += 2.0 * beta * (vw - uw + beta * (tau - uv));
 
 	alphas[v] += beta;
 	alphas[u] -= beta;
-
-	if (svnumber >= cacheDepth) {
-		resizeCache();
-	}
 
 	if (svnumber - psvnumber > CACHE_DENSITY_RATIO * svnumber) {
 		shrink();
