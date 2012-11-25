@@ -19,6 +19,8 @@
 #ifndef CACHE_H_
 #define CACHE_H_
 
+#include <set>
+
 #include "kernel.h"
 #include "../math/random.h"
 
@@ -31,14 +33,10 @@
 #define STATS(c)
 #endif
 
-#define VIOLATOR_DISCARD_PROB 0.5
-#define VIOLATOR_PROBE_SIZE 200
-#define VIOLATOR_MIN_EST_PROP 1.4
-
-#define INITIAL_CACHE_DEPTH 1024
-#define INITIAL_ID 0
-
 #define CACHE_DENSITY_RATIO 0.1
+#define CACHE_DEPTH_INCREASE 1.4
+#define INITIAL_CACHE_DEPTH 256
+#define INITIAL_ID 0
 
 typedef sample_id row_id;
 
@@ -115,6 +113,7 @@ class CachedKernelEvaluator {
 
 	quantity problemSize;
 	quantity cacheSize;
+	quantity cacheLines;
 	quantity cacheDepth;
 	fvalue *cache;
 
@@ -201,9 +200,11 @@ CachedKernelEvaluator<Kernel, Matrix, Strategy>::CachedKernelEvaluator(
 		eta(eta),
 		listener(listener) {
 	problemSize = probSize;
-	cacheSize = cchSize <= probSize ? cchSize : probSize;
+	quantity mb = 1024 * 1024;
+	cacheSize = max(cchSize * mb, (quantity) (2 * probSize * sizeof(fvalue)));
 	cacheDepth = INITIAL_CACHE_DEPTH;
-	cache = new fvalue[cacheDepth * cacheSize];
+	cacheLines = cacheSize / cacheDepth;
+	cache = new fvalue[cacheLines * cacheDepth];
 
 	// initialize alphas and kernel values
 	alphas = new fvalue[problemSize];
@@ -233,8 +234,8 @@ CachedKernelEvaluator<Kernel, Matrix, Strategy>::CachedKernelEvaluator(
 
 	// initialize vector views
 	quantity offset = 0;
-	views = new fvectorv[cacheSize];
-	for (quantity i = 0; i < cacheSize; i++) {
+	views = new fvectorv[cacheLines];
+	for (quantity i = 0; i < cacheLines; i++) {
 		views[i] = fvectorv_array(cache + offset, cacheDepth);
 		views[i].vector.size = 0;
 		offset += cacheDepth;
@@ -248,8 +249,8 @@ CachedKernelEvaluator<Kernel, Matrix, Strategy>::CachedKernelEvaluator(
 	mappings[INITIAL_ID].cacheEntry = INITIAL_ID;
 
 	// initialize cache entries
-	entries = new CacheEntry[cacheSize];
-	for (entry_id i = INITIAL_ID; i < cacheSize; i++) {
+	entries = new CacheEntry[cacheLines];
+	for (entry_id i = INITIAL_ID; i < cacheLines; i++) {
 		CacheEntry &entry = entries[i];
 		entry.prev = i + 1;
 		entry.next = i - 1;
@@ -259,10 +260,10 @@ CachedKernelEvaluator<Kernel, Matrix, Strategy>::CachedKernelEvaluator(
 		EntryMapping &mapping = mappings[i];
 		mapping.cacheEntry = i;
 	}
-	entries[cacheSize - 1].prev = INITIAL_ID;
-	entries[INITIAL_ID].next = cacheSize - 1;
+	entries[cacheLines - 1].prev = INITIAL_ID;
+	entries[INITIAL_ID].next = cacheLines - 1;
 
-	lruEntry = cacheSize - 1;
+	lruEntry = cacheLines - 1;
 
 	w2 = evaluator->getKernelTau();
 }
@@ -379,7 +380,6 @@ CacheEntry& CachedKernelEvaluator<Kernel, Matrix, Strategy>::initializeEntry(sam
 
 	// scroll LRU pointer
 	lruEntry = released.next;
-
 	return released;
 }
 
@@ -413,25 +413,52 @@ void CachedKernelEvaluator<Kernel, Matrix, Strategy>::refreshEntry(sample_id v) 
 
 template<typename Kernel, typename Matrix, typename Strategy>
 void CachedKernelEvaluator<Kernel, Matrix, Strategy>::resizeCache() {
-	quantity newCacheDepth = 2 * cacheDepth;
-	fvalue *newCache = new fvalue[newCacheDepth * cacheSize];
-	for (quantity i = 0; i < cacheSize; i++) {
-		entry_id id = cacheSize - i - 1;
-		fvectorv oldView = views[id];
+	quantity newCacheDepth = CACHE_DEPTH_INCREASE * cacheDepth;
+	quantity newCacheLines = cacheSize / newCacheDepth;
+	fvalue *newCache = new fvalue[newCacheLines * newCacheDepth];
+
+	CacheEntry &lastInvalid = entries[lruEntry];
+
+	entry_id entry = lastInvalid.prev;
+	for (quantity i = 0; i < newCacheLines; i++) {
+		CacheEntry& current = entries[entry];
+
+		fvectorv oldView = views[current.vector];
 		size_t oldSize = oldView.vector.size;
 		fvectorv newView;
 		if (oldSize > 0) {
-			newView = fvectorv_array(newCache + id * newCacheDepth, oldView.vector.size);
+			newView = fvectorv_array(newCache + i * newCacheDepth, oldView.vector.size);
 			fvector_cpy(&newView.vector, &oldView.vector);
 		} else {
-			newView = fvectorv_array(newCache + id * newCacheDepth, 1);
+			newView = fvectorv_array(newCache + i * newCacheDepth, 1);
 			newView.vector.size = 0;
 		}
-		views[id] = newView;
+		views[current.vector] = newView;
+		entry = current.prev;
 	}
+
+	CacheEntry &firstInvalid = entries[entry];
+	CacheEntry &lastValid = entries[firstInvalid.next];
+
+	for (quantity i = newCacheLines; i < cacheLines; i++) {
+		CacheEntry& current = entries[entry];
+
+		EntryMapping &mapping = mappings[current.mapping];
+		mapping.cacheEntry = INVALID_ENTRY_ID;
+
+		entry = current.prev;
+	}
+
+	CacheEntry &firstValid = entries[lastInvalid.prev];
+
+	lastValid.prev = lastInvalid.prev;
+	firstValid.next = firstInvalid.next;
+	lruEntry = firstInvalid.next;
+
 	delete [] cache;
 	cache = newCache;
 	cacheDepth = newCacheDepth;
+	cacheLines = newCacheLines;
 
 	//	shrink();
 }
@@ -568,7 +595,8 @@ void CachedKernelEvaluator<Kernel, Matrix, Strategy>::performUpdate(sample_id u,
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-void CachedKernelEvaluator<Kernel, Matrix, Strategy>::releaseSupportVectors(fold_id *membership, fold_id fold) {
+void CachedKernelEvaluator<Kernel, Matrix, Strategy>::releaseSupportVectors(
+		fold_id *membership, fold_id fold) {
 	quantity valid = 0;
 	for (sample_id v = 0; v < svnumber; v++) {
 		fvalue beta = alphas[v];
@@ -658,7 +686,7 @@ void CachedKernelEvaluator<Kernel, Matrix, Strategy>::reset() {
 	kernelValuesView = fvectorv_array(kernelValues, svnumber);
 	kernelValues[0] = evaluator->getKernelTau();
 
-	for (entry_id i = 0; i < cacheSize; i++) {
+	for (entry_id i = 0; i < cacheLines; i++) {
 		views[i].vector.size = 0;
 	}
 
@@ -825,36 +853,40 @@ void CachedKernelEvaluator<Kernel, Matrix, Strategy>::reportStatistics() {
 template<typename Kernel, typename Matrix, typename Strategy>
 void CachedKernelEvaluator<Kernel, Matrix, Strategy>::structureCheck() {
 	try {
-		entry_id ptr;
-
-		ptr = lruEntry;
-		for (quantity i = 0; i < cacheSize; i++) {
-			if (ptr > cacheSize || ptr < 0) {
-				throw "invalid ptr (next)";
-			}
+		set<id> ids;
+		entry_id ptr = lruEntry;
+		for (quantity i = 0; i < cacheLines; i++) {
+			ids.insert(ptr);
 			ptr = entries[ptr].next;
 		}
-		if (ptr != lruEntry) {
+		if (ptr != lruEntry || ids.size() != cacheLines) {
 			throw "invalid cache structure (next)";
 		}
 
-		ptr = lruEntry;
-		for (quantity i = 0; i < cacheSize; i++) {
-			if (ptr > cacheSize || ptr < 0) {
-				throw "invalid ptr (prev)";
-			}
+		ids.clear();
+
+		for (quantity i = 0; i < cacheLines; i++) {
+			ids.insert(ptr);
 			ptr = entries[ptr].prev;
 		}
-		if (ptr != lruEntry) {
+		if (ptr != lruEntry || ids.size() != cacheLines) {
 			throw "invalid cache structure (prev)";
+		}
+
+		for (sample_id i = 0; i < problemSize; i++) {
+			entry_id id = mappings[i].cacheEntry;
+			if (id != INVALID_ENTRY_ID && ids.count(id) == 0) {
+				throw "invalid mapping";
+			}
 		}
 
 		if (fabs(fvector_sum(&alphasView.vector) - 1.0) > 0.0001) {
 			throw "invalid alphas";
 		}
 
-		for (entry_id e = 0; e < cacheSize; e++) {
-			CacheEntry &entry = entries[e];
+		entry_id entryId = lruEntry;
+		for (entry_id e = 0; e < cacheLines; e++) {
+			CacheEntry &entry = entries[entryId];
 			fvectorv vect = views[entry.vector];
 			for (size_t i = 0; i < vect.vector.size; i++) {
 				fvalue kern = evalKernel(entry.mapping, i);
@@ -863,11 +895,6 @@ void CachedKernelEvaluator<Kernel, Matrix, Strategy>::structureCheck() {
 					throw "invalid kernel value";
 				}
 			}
-		}
-
-		for (entry_id e = 0; e < cacheSize; e++) {
-			CacheEntry &entry = entries[e];
-			fvectorv vect = views[entry.vector];
 			if (vect.vector.size == svnumber && entry.mapping < svnumber) {
 				fvalue kern;
 				fvector_dot(&vect.vector, &alphasView.vector, &kern);
@@ -876,6 +903,7 @@ void CachedKernelEvaluator<Kernel, Matrix, Strategy>::structureCheck() {
 					throw "invalid buffered kernel value";
 				}
 			}
+			entryId = entry.next;
 		}
 
 		fvalue w2ex;
