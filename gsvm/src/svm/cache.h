@@ -860,7 +860,7 @@ void CachedKernelEvaluator<Kernel, Matrix, Strategy>::structureCheck() {
 			ptr = entries[ptr].next;
 		}
 		if (ptr != lruEntry || ids.size() != cacheLines) {
-			throw "invalid cache structure (next)";
+			throw runtime_error("invalid cache structure (next)");
 		}
 
 		ids.clear();
@@ -870,18 +870,18 @@ void CachedKernelEvaluator<Kernel, Matrix, Strategy>::structureCheck() {
 			ptr = entries[ptr].prev;
 		}
 		if (ptr != lruEntry || ids.size() != cacheLines) {
-			throw "invalid cache structure (prev)";
+			throw runtime_error("invalid cache structure (prev)");
 		}
 
 		for (sample_id i = 0; i < problemSize; i++) {
 			entry_id id = mappings[i].cacheEntry;
 			if (id != INVALID_ENTRY_ID && ids.count(id) == 0) {
-				throw "invalid mapping";
+				throw runtime_error("invalid mapping");
 			}
 		}
 
 		if (fabs(fvector_sum(&alphasView.vector) - 1.0) > 0.0001) {
-			throw "invalid alphas";
+			throw runtime_error("invalid alphas");
 		}
 
 		entry_id entryId = lruEntry;
@@ -892,7 +892,7 @@ void CachedKernelEvaluator<Kernel, Matrix, Strategy>::structureCheck() {
 				fvalue kern = evalKernel(entry.mapping, i);
 				fvalue buff = fvector_get(&vect.vector, i);
 				if (fabs(kern - buff) > 0.0001) {
-					throw "invalid kernel value";
+					throw runtime_error("invalid kernel value");
 				}
 			}
 			if (vect.vector.size == svnumber && entry.mapping < svnumber) {
@@ -900,7 +900,7 @@ void CachedKernelEvaluator<Kernel, Matrix, Strategy>::structureCheck() {
 				fvector_dot(&vect.vector, &alphasView.vector, &kern);
 				fvalue buff = kernelValues[entry.mapping];
 				if (fabs(kern - buff) > 0.0001) {
-					throw "invalid buffered kernel value";
+					throw runtime_error("invalid buffered kernel value");
 				}
 			}
 			entryId = entry.next;
@@ -909,10 +909,10 @@ void CachedKernelEvaluator<Kernel, Matrix, Strategy>::structureCheck() {
 		fvalue w2ex;
 		fvector_dot(&kernelValuesView.vector, &alphasView.vector, &w2ex);
 		if (fabs(w2ex - w2) > 0.0001) {
-			throw "invalid w2";
+			throw runtime_error("invalid w2");
 		}
-	} catch (char const *ex) {
-		cerr << ex << endl;
+	} catch (runtime_error const& ex) {
+		cerr << ex.what() << endl;
 		throw ex;
 	}
 }
