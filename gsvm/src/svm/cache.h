@@ -204,6 +204,9 @@ CachedKernelEvaluator<Kernel, Matrix, Strategy>::CachedKernelEvaluator(
 	problemSize = probSize;
 	quantity fvaluePerMb = 1024 * 1024 / sizeof(fvalue);
 	cacheSize = max(cchSize * fvaluePerMb, 2 * probSize);
+	if (cacheSize / probSize > probSize) {
+		cacheSize = probSize * probSize;
+	}
 	cache = new fvalue[cacheSize];
 	cacheDepth = min((quantity) INITIAL_CACHE_DEPTH, problemSize);
 	cacheLines = min(cacheSize / cacheDepth, problemSize);
