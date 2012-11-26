@@ -644,7 +644,7 @@ void CachedKernelEvaluator<Kernel, Matrix, Strategy>::swapSamples(sample_id u, s
 
 template<typename Kernel, typename Matrix, typename Strategy>
 void CachedKernelEvaluator<Kernel, Matrix, Strategy>::reset() {
-	if (svnumber != 1) {
+	if (alphas[INITIAL_ID] < 1.0) {
 		initialize();
 	}
 }
@@ -898,7 +898,6 @@ void CachedKernelEvaluator<Kernel, Matrix, Strategy>::structureCheck() {
 		}
 
 		if (fabs(fvector_sum(&alphasView.vector) - 1.0) > 0.0001) {
-			cout << fvector_sum(&alphasView.vector) << endl;
 			throw runtime_error("invalid alphas");
 		}
 
