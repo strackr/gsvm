@@ -413,7 +413,7 @@ void CachedKernelEvaluator<Kernel, Matrix, Strategy>::refreshEntry(sample_id v) 
 
 template<typename Kernel, typename Matrix, typename Strategy>
 void CachedKernelEvaluator<Kernel, Matrix, Strategy>::resizeCache() {
-	quantity newCacheDepth = min((quantity) CACHE_DEPTH_INCREASE * cacheDepth, problemSize);
+	quantity newCacheDepth = min((quantity) (CACHE_DEPTH_INCREASE * cacheDepth), problemSize);
 	quantity newCacheLines = min(cacheSize / newCacheDepth, problemSize);
 	fvalue *newCache = new fvalue[cacheSize];
 
