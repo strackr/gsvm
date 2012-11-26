@@ -138,6 +138,8 @@ class CachedKernelEvaluator {
 	Stats stats;
 
 protected:
+	void initialize();
+
 	CacheEntry& initializeEntry(sample_id v);
 	void refreshEntry(sample_id v);
 
@@ -202,25 +204,17 @@ CachedKernelEvaluator<Kernel, Matrix, Strategy>::CachedKernelEvaluator(
 	problemSize = probSize;
 	quantity fvaluePerMb = 1024 * 1024 / sizeof(fvalue);
 	cacheSize = max(cchSize * fvaluePerMb, 2 * probSize);
-	cacheDepth = min((quantity) INITIAL_CACHE_DEPTH, probSize);
-	cacheLines = min(cacheSize / cacheDepth, probSize);
 	cache = new fvalue[cacheSize];
+	cacheDepth = min((quantity) INITIAL_CACHE_DEPTH, problemSize);
+	cacheLines = min(cacheSize / cacheDepth, problemSize);
 
 	// initialize alphas and kernel values
-	alphas = new fvalue[problemSize];
-	kernelValues = new fvalue[problemSize];
-	for (sample_id i = 0; i < problemSize; i++) {
-		alphas[i] = 0.0;
-		kernelValues[i] = 0.0;
-	}
-	alphas[0] = 1.0;
-	kernelValues[0] = evaluator->getKernelTau();
 	svnumber = 1;
-	psvnumber = 1;
+	alphas = new fvalue[problemSize];
 	alphasView = fvectorv_array(alphas, svnumber);
+	kernelValues = new fvalue[problemSize];
 	kernelValuesView = fvectorv_array(kernelValues, svnumber);
 
-	// initialize buffer
 	fbuffer = fvector_alloc(problemSize);
 	fbufferView = fvector_subv(fbuffer, 0, svnumber);
 
@@ -231,40 +225,12 @@ CachedKernelEvaluator<Kernel, Matrix, Strategy>::CachedKernelEvaluator(
 		backwardOrder[i] = i;
 	}
 
-	// initialize vector views
-	quantity offset = 0;
-	views = new fvectorv[cacheLines];
-	for (quantity i = 0; i < cacheLines; i++) {
-		views[i] = fvectorv_array(cache + offset, cacheDepth);
-		views[i].vector.size = 0;
-		offset += cacheDepth;
-	}
-
-	// initialize cache mappings
-	mappings = new EntryMapping[problemSize];
-	fvector *initialVector = &views[INITIAL_ID].vector;
-	initialVector->size = 1;
-	fvector_set(initialVector, 0, evaluator->getKernelTau());
-	mappings[INITIAL_ID].cacheEntry = INITIAL_ID;
-
 	// initialize cache entries
+	views = new fvectorv[cacheLines];
+	mappings = new EntryMapping[problemSize];
 	entries = new CacheEntry[cacheLines];
-	for (entry_id i = INITIAL_ID; i < cacheLines; i++) {
-		CacheEntry &entry = entries[i];
-		entry.prev = i + 1;
-		entry.next = i - 1;
-		entry.vector = i;
-		entry.mapping = i;
 
-		EntryMapping &mapping = mappings[i];
-		mapping.cacheEntry = i;
-	}
-	entries[cacheLines - 1].prev = INITIAL_ID;
-	entries[INITIAL_ID].next = cacheLines - 1;
-
-	lruEntry = cacheLines - 1;
-
-	w2 = evaluator->getKernelTau();
+	initialize();
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
@@ -675,61 +641,66 @@ void CachedKernelEvaluator<Kernel, Matrix, Strategy>::swapSamples(sample_id u, s
 
 template<typename Kernel, typename Matrix, typename Strategy>
 void CachedKernelEvaluator<Kernel, Matrix, Strategy>::reset() {
-	if (svnumber > 1) {
-		cacheDepth = min((quantity) INITIAL_CACHE_DEPTH, problemSize);
-		cacheLines = min(cacheSize / cacheDepth, problemSize);
-
-		// initialize alphas and kernel values
-		for (sample_id i = 0; i < problemSize; i++) {
-			alphas[i] = 0.0;
-			kernelValues[i] = 0.0;
-		}
-		alphas[0] = 1.0;
-		kernelValues[0] = evaluator->getKernelTau();
-		svnumber = 1;
-		psvnumber = 1;
-		alphasView = fvectorv_array(alphas, svnumber);
-		kernelValuesView = fvectorv_array(kernelValues, svnumber);
-
-		// initialize buffer
-		fbufferView = fvector_subv(fbuffer, 0, svnumber);
-
-		// initialize vector views
-		quantity offset = 0;
-		for (quantity i = 0; i < cacheLines; i++) {
-			views[i] = fvectorv_array(cache + offset, cacheDepth);
-			views[i].vector.size = 0;
-			offset += cacheDepth;
-		}
-
-		// initialize cache mappings
-		fvector *initialVector = &views[INITIAL_ID].vector;
-		initialVector->size = 1;
-		fvector_set(initialVector, 0, evaluator->getKernelTau());
-		mappings[INITIAL_ID].cacheEntry = INITIAL_ID;
-
-		// initialize cache entries
-		for (entry_id i = INITIAL_ID; i < cacheLines; i++) {
-			CacheEntry &entry = entries[i];
-			entry.prev = i + 1;
-			entry.next = i - 1;
-			entry.vector = i;
-			entry.mapping = i;
-
-			EntryMapping &mapping = mappings[i];
-			mapping.cacheEntry = i;
-		}
-		for (entry_id i = cacheLines; i < problemSize; i++) {
-			EntryMapping &mapping = mappings[i];
-			mapping.cacheEntry = INVALID_ENTRY_ID;
-		}
-		entries[cacheLines - 1].prev = INITIAL_ID;
-		entries[INITIAL_ID].next = cacheLines - 1;
-
-		lruEntry = cacheLines - 1;
-
-		w2 = evaluator->getKernelTau();
+	if (svnumber != 1) {
+		initialize();
 	}
+}
+
+template<typename Kernel, typename Matrix, typename Strategy>
+void CachedKernelEvaluator<Kernel, Matrix, Strategy>::initialize() {
+	cacheDepth = min((quantity) INITIAL_CACHE_DEPTH, problemSize);
+	cacheLines = min(cacheSize / cacheDepth, problemSize);
+
+	// initialize alphas and kernel values
+	for (sample_id i = 0; i < problemSize; i++) {
+		alphas[i] = 0.0;
+		kernelValues[i] = 0.0;
+	}
+	alphas[0] = 1.0;
+	kernelValues[0] = evaluator->getKernelTau();
+	svnumber = 1;
+	psvnumber = 1;
+	alphasView = fvectorv_array(alphas, svnumber);
+	kernelValuesView = fvectorv_array(kernelValues, svnumber);
+
+	// initialize buffer
+	fbufferView = fvector_subv(fbuffer, 0, svnumber);
+
+	// initialize vector views
+	quantity offset = 0;
+	for (quantity i = 0; i < cacheLines; i++) {
+		views[i] = fvectorv_array(cache + offset, cacheDepth);
+		views[i].vector.size = 0;
+		offset += cacheDepth;
+	}
+
+	// initialize cache mappings
+	fvector *initialVector = &views[INITIAL_ID].vector;
+	initialVector->size = 1;
+	fvector_set(initialVector, 0, evaluator->getKernelTau());
+	mappings[INITIAL_ID].cacheEntry = INITIAL_ID;
+
+	// initialize cache entries
+	for (entry_id i = INITIAL_ID; i < cacheLines; i++) {
+		CacheEntry &entry = entries[i];
+		entry.prev = i + 1;
+		entry.next = i - 1;
+		entry.vector = i;
+		entry.mapping = i;
+
+		EntryMapping &mapping = mappings[i];
+		mapping.cacheEntry = i;
+	}
+	for (entry_id i = cacheLines; i < problemSize; i++) {
+		EntryMapping &mapping = mappings[i];
+		mapping.cacheEntry = INVALID_ENTRY_ID;
+	}
+	entries[cacheLines - 1].prev = INITIAL_ID;
+	entries[INITIAL_ID].next = cacheLines - 1;
+
+	lruEntry = cacheLines - 1;
+
+	w2 = evaluator->getKernelTau();
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
