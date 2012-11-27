@@ -25,6 +25,10 @@ ostream& operator<< (ostream& os, variables_map& vars) {
 			os << format("%-20s%s\n") % it->first % it->second.as<string>();
 		} else if (typeid(double) == it->second.value().type()) {
 			os << format("%-20s%g\n") % it->first % it->second.as<double>();
+		} else if (typeid(float) == it->second.value().type()) {
+			os << format("%-20s%g\n") % it->first % it->second.as<float>();
+		} else if (typeid(long) == it->second.value().type()) {
+			os << format("%-20s%l\n") % it->first % it->second.as<long>();
 		} else if (typeid(int) == it->second.value().type()) {
 			os << format("%-20s%d\n") % it->first % it->second.as<int>();
 		}
