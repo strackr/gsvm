@@ -97,6 +97,14 @@ public:
 };
 
 
+struct CacheDimension {
+
+	quantity lines;
+	quantity depth;
+
+};
+
+
 template<typename Kernel, typename Matrix, typename Strategy>
 class CachedKernelEvaluator {
 
@@ -139,6 +147,7 @@ class CachedKernelEvaluator {
 
 protected:
 	void initialize();
+	CacheDimension findCacheDimension(quantity maxSize, quantity problemSize);
 
 	CacheEntry& initializeEntry(sample_id v);
 	void refreshEntry(sample_id v);
@@ -204,13 +213,12 @@ CachedKernelEvaluator<Kernel, Matrix, Strategy>::CachedKernelEvaluator(
 	problemSize = probSize;
 	quantity fvaluePerMb = 1024 * 1024 / sizeof(fvalue);
 	cacheSize = max(cchSize * fvaluePerMb, 2 * probSize);
-	cacheDepth = min((quantity) INITIAL_CACHE_DEPTH, problemSize);
-	cacheLines = min(cacheSize / cacheDepth, problemSize);
 	if (cacheSize / probSize > probSize) {
 		cacheSize = probSize * probSize;
-		cacheDepth = problemSize;
-		cacheLines = problemSize;
 	}
+	CacheDimension dim = findCacheDimension(cacheSize, problemSize);
+	cacheDepth = dim.depth;
+	cacheLines = dim.lines;
 	cache = new fvalue[cacheSize];
 
 	// initialize alphas and kernel values
@@ -647,15 +655,16 @@ void CachedKernelEvaluator<Kernel, Matrix, Strategy>::swapSamples(sample_id u, s
 template<typename Kernel, typename Matrix, typename Strategy>
 void CachedKernelEvaluator<Kernel, Matrix, Strategy>::reset() {
 	if (alphas[INITIAL_ID] < 1.0) {
+		CacheDimension dim = findCacheDimension(cacheSize, problemSize);
+		cacheLines = dim.lines;
+		cacheDepth = dim.depth;
+
 		initialize();
 	}
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
 void CachedKernelEvaluator<Kernel, Matrix, Strategy>::initialize() {
-	cacheDepth = min((quantity) INITIAL_CACHE_DEPTH, problemSize);
-	cacheLines = min(cacheSize / cacheDepth, problemSize);
-
 	// initialize alphas and kernel values
 	for (sample_id i = 0; i < problemSize; i++) {
 		alphas[i] = 0.0;
@@ -706,6 +715,20 @@ void CachedKernelEvaluator<Kernel, Matrix, Strategy>::initialize() {
 	lruEntry = cacheLines - 1;
 
 	w2 = evaluator->getKernelTau();
+}
+
+template<typename Kernel, typename Matrix, typename Strategy>
+CacheDimension CachedKernelEvaluator<Kernel, Matrix, Strategy>::findCacheDimension(
+		quantity cacheSize, quantity problemSize) {
+	CacheDimension dimension;
+	if (cacheSize / problemSize < problemSize) {
+		dimension.depth = max((quantity) INITIAL_CACHE_DEPTH, cacheSize / problemSize);
+		dimension.lines = min(cacheSize / dimension.depth, problemSize);
+	} else {
+		dimension.depth = problemSize;
+		dimension.lines = problemSize;
+	}
+	return dimension;
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
