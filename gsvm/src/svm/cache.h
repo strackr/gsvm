@@ -654,13 +654,11 @@ void CachedKernelEvaluator<Kernel, Matrix, Strategy>::swapSamples(sample_id u, s
 
 template<typename Kernel, typename Matrix, typename Strategy>
 void CachedKernelEvaluator<Kernel, Matrix, Strategy>::reset() {
-	if (alphas[INITIAL_ID] < 1.0) {
-		CacheDimension dim = findCacheDimension(cacheSize, problemSize);
-		cacheLines = dim.lines;
-		cacheDepth = dim.depth;
+	CacheDimension dim = findCacheDimension(cacheSize, problemSize);
+	cacheLines = dim.lines;
+	cacheDepth = dim.depth;
 
-		initialize();
-	}
+	initialize();
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
