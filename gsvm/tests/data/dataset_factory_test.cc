@@ -19,6 +19,7 @@
 #include <gtest/gtest.h>
 #include <boost/smart_ptr.hpp>
 
+#include "../math/math_asserts.h"
 #include "../math/matrix_utils.h"
 
 #include "../../src/data/dataset.h"
@@ -51,14 +52,14 @@ TEST(DataSetFactorySuite, ShouldCreateCompleteDataSet) {
 	ASSERT_EQ(3, features.size());
 
 	ASSERT_EQ(1, features[0].size());
-	ASSERT_EQ(0.5, features[0][1]);
+	ASSERT_FVALUE_EQ(0.5, features[0][1]);
 
 	ASSERT_EQ(1, features[1].size());
-	ASSERT_EQ(-1.0, features[1][10]);
+	ASSERT_FVALUE_EQ(-1.0, features[1][10]);
 
 	ASSERT_EQ(2, features[2].size());
-	ASSERT_EQ(1.0, features[2][1]);
-	ASSERT_EQ(0.1, features[2][2]);
+	ASSERT_FVALUE_EQ(1.0, features[2][1]);
+	ASSERT_FVALUE_EQ(0.1, features[2][2]);
 
 	ASSERT_EQ(3, labels.size());
 	ASSERT_TRUE(labels[0] == labels[2]);
@@ -89,10 +90,10 @@ TEST(DataSetFactorySuite, ShouldCreateCorrectSparseMatrix) {
 	ASSERT_EQ(2, matrix->width);
 	ASSERT_EQ(3, matrix->height);
 
-	ASSERT_EQ(0.6, matrix->values[0]);
-	ASSERT_EQ(0.4, matrix->values[1]);
-	ASSERT_EQ(0.5, matrix->values[3]);
-	ASSERT_EQ(0.3, matrix->values[5]);
+	ASSERT_FVALUE_EQ(0.6, matrix->values[0]);
+	ASSERT_FVALUE_EQ(0.4, matrix->values[1]);
+	ASSERT_FVALUE_EQ(0.5, matrix->values[3]);
+	ASSERT_FVALUE_EQ(0.3, matrix->values[5]);
 
 	ASSERT_EQ(0, matrix->features[0]);
 	ASSERT_EQ(1, matrix->features[1]);

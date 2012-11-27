@@ -54,6 +54,7 @@ SOURCES_CHECK = \
 		tests/data/dataset_factory_test.cc \
 		tests/math/matrix_operations_test.cc \
 		tests/math/matrix_utils.h \
+		tests/math/math_asserts.h \
 		tests/svm/classification_test.cc
 SORUCES_LOGGING_CHECK = \
 		tests/logging/fake_log.cc

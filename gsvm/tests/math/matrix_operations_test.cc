@@ -19,14 +19,17 @@
 #include <gtest/gtest.h>
 #include <boost/smart_ptr.hpp>
 
+#include "math_asserts.h"
 #include "matrix_utils.h"
 
 #include "../../src/math/matrix.h"
 #include "../../src/data/dataset.h"
 #include "../../src/data/solver_factory.h"
 
+
 using namespace boost;
 using namespace testing;
+
 
 template<typename Matrix>
 class MatrixOperationsSuite: public Test {
@@ -50,7 +53,7 @@ TYPED_TEST(MatrixOperationsSuite, ShouldEvaluateDotProductForOneSample) {
 	fvalue dot = evaluator.dot(0, 0);
 
 	// then
-	ASSERT_DOUBLE_EQ(0.25, dot);
+	ASSERT_FVALUE_EQ(0.25, dot);
 }
 
 TYPED_TEST(MatrixOperationsSuite, ShouldEvaluateDotProductForTwoSamples) {
@@ -67,8 +70,8 @@ TYPED_TEST(MatrixOperationsSuite, ShouldEvaluateDotProductForTwoSamples) {
 	fvalue dot01 = evaluator.dot(0, 1);
 
 	// then
-	ASSERT_DOUBLE_EQ(0.1, dot01);
-	ASSERT_DOUBLE_EQ(0.1, dot10);
+	ASSERT_FVALUE_EQ(0.1, dot01);
+	ASSERT_FVALUE_EQ(0.1, dot10);
 }
 
 TYPED_TEST(MatrixOperationsSuite, ShouldEvaluateSelfDistance) {
@@ -82,7 +85,7 @@ TYPED_TEST(MatrixOperationsSuite, ShouldEvaluateSelfDistance) {
 	fvalue dist = evaluator.dist(0, 0);
 
 	// then
-	ASSERT_DOUBLE_EQ(0.0, dist);
+	ASSERT_FVALUE_EQ(0.0, dist);
 }
 
 TYPED_TEST(MatrixOperationsSuite, ShouldSwapTwoSamples) {
@@ -129,8 +132,8 @@ TYPED_TEST(MatrixOperationsSuite, ShouldCalculateMultipleDist) {
 	fvector_free(buffer);
 
 	// then
-	ASSERT_DOUBLE_EQ(0.25, dist20);
-	ASSERT_DOUBLE_EQ(0.37, dist21);
+	ASSERT_FVALUE_EQ(0.25, dist20);
+	ASSERT_FVALUE_EQ(0.37, dist21);
 }
 
 TYPED_TEST(MatrixOperationsSuite, ShouldCalculateMultipleDistWithMappings) {
@@ -153,6 +156,6 @@ TYPED_TEST(MatrixOperationsSuite, ShouldCalculateMultipleDistWithMappings) {
 	fvector_free(buffer);
 
 	// then
-	ASSERT_DOUBLE_EQ(0.25, dist1);
-	ASSERT_DOUBLE_EQ(0.37, dist2);
+	ASSERT_FVALUE_EQ(0.25, dist1);
+	ASSERT_FVALUE_EQ(0.37, dist2);
 }
