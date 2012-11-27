@@ -276,7 +276,7 @@ TestingResult CrossValidationSolver<Kernel, Matrix, Strategy>::test(
 		}
 	}
 	delete classifier;
-	return TestingResult((double) correct / (to - from));
+	return TestingResult((fvalue) correct / (to - from));
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
