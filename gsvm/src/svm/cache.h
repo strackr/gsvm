@@ -34,7 +34,7 @@
 #endif
 
 #define CACHE_DENSITY_RATIO 0.1
-#define CACHE_DEPTH_INCREASE 1.4
+#define CACHE_DEPTH_INCREASE 1.5
 #define INITIAL_CACHE_DEPTH 256
 #define INITIAL_ID 0
 
@@ -204,12 +204,14 @@ CachedKernelEvaluator<Kernel, Matrix, Strategy>::CachedKernelEvaluator(
 	problemSize = probSize;
 	quantity fvaluePerMb = 1024 * 1024 / sizeof(fvalue);
 	cacheSize = max(cchSize * fvaluePerMb, 2 * probSize);
-	if (cacheSize / probSize > probSize) {
-		cacheSize = probSize * probSize;
-	}
-	cache = new fvalue[cacheSize];
 	cacheDepth = min((quantity) INITIAL_CACHE_DEPTH, problemSize);
 	cacheLines = min(cacheSize / cacheDepth, problemSize);
+	if (cacheSize / probSize > probSize) {
+		cacheSize = probSize * probSize;
+		cacheDepth = problemSize;
+		cacheLines = problemSize;
+	}
+	cache = new fvalue[cacheSize];
 
 	// initialize alphas and kernel values
 	svnumber = 1;
