@@ -31,9 +31,9 @@
 
 struct TestingResult {
 
-	double accuracy;
+	fvalue accuracy;
 
-	TestingResult(double accuracy = 0.0) :
+	TestingResult(fvalue accuracy = 0.0) :
 			accuracy(accuracy) {
 	}
 

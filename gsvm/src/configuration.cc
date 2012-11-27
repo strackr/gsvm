@@ -50,18 +50,18 @@ Configuration ParametersParser::getConfiguration() {
 
 	SearchRange range;
 	range.cResolution = vars[PR_KEY_RES].as<int>();
-	range.cLow = vars[PR_KEY_C_LOW].as<double>();
-	range.cHigh = vars[PR_KEY_C_HIGH].as<double>();
+	range.cLow = vars[PR_KEY_C_LOW].as<fvalue>();
+	range.cHigh = vars[PR_KEY_C_HIGH].as<fvalue>();
 	range.gammaResolution = vars[PR_KEY_RES].as<int>();
-	range.gammaLow = vars[PR_KEY_G_LOW].as<double>();
-	range.gammaHigh = vars[PR_KEY_G_HIGH].as<double>();
+	range.gammaLow = vars[PR_KEY_G_LOW].as<fvalue>();
+	range.gammaHigh = vars[PR_KEY_G_HIGH].as<fvalue>();
 	conf.searchRange = range;
 
 	fvalue epsilon = 0.0;
 	if (vars[PR_KEY_EPSILON].as<string>() != EPSILON_DEFAULT) {
 		istringstream(vars[PR_KEY_EPSILON].as<string>()) >> epsilon;
 	}
-	fvalue eta = vars[PR_KEY_ETA].as<double>();
+	fvalue eta = vars[PR_KEY_ETA].as<fvalue>();
 	quantity drawNumber = vars[PR_KEY_DRAW_NUM].as<int>();
 	quantity cacheSize = vars[PR_KEY_CACHE_SIZE].as<int>();
 	TrainParams params;

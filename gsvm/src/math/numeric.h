@@ -20,7 +20,7 @@
 #define NUMERIC_H_
 
 // comment out to use double precision
-//#define SINGLE_PRECISION
+#define SINGLE_PRECISION
 // comment out to disable debug mode
 #define DEBUG_MODE
 

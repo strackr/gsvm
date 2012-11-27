@@ -66,7 +66,7 @@ inline fvalue ViolationEstimator<MDM>::evaluateGoodness(fvalue au, fvalue av,
 template<>
 inline fvalue ViolationEstimator<IMDM>::evaluateGoodness(fvalue au, fvalue av,
 		fvalue uv, fvalue uw, fvalue vw, fvalue tau) {
-	fvalue beta = min(0.5 * (uw - vw) / (tau - uv), au);
+	fvalue beta = min((fvalue) 0.5 * (uw - vw) / (tau - uv), au);
 	return -beta * (vw - uw + beta * (tau - uv));
 }
 
