@@ -158,8 +158,11 @@ void RbfKernelEvaluator<Kernel, Matrix>::evalKernel(sample_id id,
 	fvalue* rptr = fvector_ptr(result);
 	label_id* lptr = labels;
 	label_id label = lptr[id];
+	fvalue vals[] = { yyNeg, 1.0 };
 	for (sample_id iid = rangeFrom; iid < rangeTo; iid++) {
-		fvalue yy = lptr[iid] == label ? 1.0 : yyNeg;
+		// trick to remove low branch prediction rate, equivalent to:
+		// fvalue yy = lptr[iid] == label ? 1.0 : yyNeg;
+		fvalue yy = vals[lptr[iid] == label];
 		rptr[iid] = yy * (rbf(rptr[iid]) + 1.0);
 	}
 	if (id >= rangeFrom && id < rangeTo) {
