@@ -36,6 +36,8 @@ struct TrainParams {
 	fvalue eta;
 	quantity drawNumber;
 
+	bool useBias;
+
 	struct {
 		quantity size;
 	} cache;

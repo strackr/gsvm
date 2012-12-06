@@ -54,6 +54,8 @@ using namespace boost::program_options;
 #define PR_ID_RANDOMIZER "randomizer,s"
 #define PR_MULTICLASS "multiclass,u"
 #define PR_CACHE_SIZE "cache-size,S"
+#define PR_WITH_BIAS "with-bias,b"
+#define PR_WITHOUT_BIAS "without-bias,B"
 
 #define PR_KEY_HELP "help"
 #define PR_KEY_C_LOW "c-low"
@@ -74,6 +76,8 @@ using namespace boost::program_options;
 #define PR_KEY_ID_RANDOMIZER "randomizer"
 #define PR_KEY_MULTICLASS "multiclass"
 #define PR_KEY_CACHE_SIZE "cache-size"
+#define PR_KEY_WITH_BIAS "with-bias"
+#define PR_KEY_WITHOUT_BIAS "without-bias"
 
 #define SEL_TYPE_GRID "grid"
 #define SEL_TYPE_PATTERN "pattern"

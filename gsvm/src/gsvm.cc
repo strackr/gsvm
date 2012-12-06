@@ -31,6 +31,8 @@ ostream& operator<< (ostream& os, variables_map& vars) {
 			os << format("%-20s%l\n") % it->first % it->second.as<long>();
 		} else if (typeid(int) == it->second.value().type()) {
 			os << format("%-20s%d\n") % it->first % it->second.as<int>();
+		} else {
+			os << it->first << "\n";
 		}
 	}
 	os << endl;
@@ -58,6 +60,8 @@ int main(int argc, char *argv[]) {
 		(PR_EPSILON, value<string>()->default_value(EPSILON_DEFAULT),
 				"epsilon value")
 		(PR_ETA, value<fvalue>()->default_value(DEFAULT_ETA), "eta value")
+		(PR_WITH_BIAS, "perform SVM training with bias")
+		(PR_WITHOUT_BIAS, "perform SVM training without bias")
 		(PR_DRAW_NUM, value<int>()->default_value(600), "draw number")
 		(PR_MULTICLASS, value<string>()->default_value(MULTICLASS_ALL_AT_ONCE),
 				"multiclass training approach (allatonce or pairwise)")

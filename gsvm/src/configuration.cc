@@ -64,9 +64,11 @@ Configuration ParametersParser::getConfiguration() {
 	fvalue eta = vars[PR_KEY_ETA].as<fvalue>();
 	quantity drawNumber = vars[PR_KEY_DRAW_NUM].as<int>();
 	quantity cacheSize = vars[PR_KEY_CACHE_SIZE].as<int>();
+	bool useBias = !vars.count(PR_KEY_WITHOUT_BIAS);
 	TrainParams params;
 	params.epsilon = epsilon;
 	params.eta = eta;
+	params.useBias = useBias;
 	params.drawNumber = drawNumber;
 	params.cache.size = cacheSize;
 	conf.trainingParams = params;
