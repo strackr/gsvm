@@ -50,6 +50,7 @@ private:
 	fvalue yyNeg;
 	fvalue d1dc;
 
+	fvalue bias;
 	fvalue tau;
 
 protected:
@@ -59,7 +60,8 @@ protected:
 	fvalue rbf(fvalue dist2);
 
 public:
-	RbfKernelEvaluator(Matrix* samples, label_id* labels, quantity classNumber, fvalue c, Kernel &params);
+	RbfKernelEvaluator(Matrix* samples, label_id* labels, quantity classNumber,
+			bool withBias, fvalue c, Kernel &params);
 	~RbfKernelEvaluator();
 
 	fvalue evalInnerKernel(sample_id uid, sample_id vid);
@@ -83,7 +85,7 @@ public:
 template<class Kernel, class Matrix>
 RbfKernelEvaluator<Kernel, Matrix>::RbfKernelEvaluator(
 		Matrix* samples, label_id* labels, quantity classNumber,
-		fvalue c, Kernel &params) :
+		bool withBias, fvalue c, Kernel &params) :
 		samples(samples),
 		labels(labels),
 		c(c),
@@ -91,7 +93,8 @@ RbfKernelEvaluator<Kernel, Matrix>::RbfKernelEvaluator(
 		eval(samples) {
 	yyNeg = -1.0 / (classNumber - 1);
 	d1dc = 1.0 / c;
-	tau = 2.0 + 1.0 / c;
+	bias = withBias ? 1.0 : 0.0;
+	tau = 1.0 + bias + 1.0 / c;
 }
 
 template<class Kernel, class Matrix>
@@ -142,10 +145,10 @@ fvalue RbfKernelEvaluator<Kernel, Matrix>::evalKernel(
 		if (uid == vid) {
 			result = tau;
 		} else {
-			result = evalInnerKernel(uid, vid) + 1.0;
+			result = evalInnerKernel(uid, vid) + bias;
 		}
 	} else {
-		result = yyNeg * (evalInnerKernel(uid, vid) + 1.0);
+		result = yyNeg * (evalInnerKernel(uid, vid) + bias);
 	}
 	return result;
 }
@@ -163,7 +166,7 @@ void RbfKernelEvaluator<Kernel, Matrix>::evalKernel(sample_id id,
 		// trick to remove low branch prediction rate, equivalent to:
 		// fvalue yy = lptr[iid] == label ? 1.0 : yyNeg;
 		fvalue yy = vals[lptr[iid] == label];
-		rptr[iid] = yy * (rbf(rptr[iid]) + 1.0);
+		rptr[iid] = yy * (rbf(rptr[iid]) + bias);
 	}
 	if (id >= rangeFrom && id < rangeTo) {
 		rptr[id] += d1dc;
@@ -187,7 +190,7 @@ void RbfKernelEvaluator<Kernel, Matrix>::setKernelParams(fvalue c, Kernel &param
 	this->params = params;
 
 	d1dc = 1.0 / c;
-	tau = 2.0 + 1.0 / c;
+	tau = 1.0 + bias + 1.0 / c;
 }
 
 template<class Kernel, class Matrix>
