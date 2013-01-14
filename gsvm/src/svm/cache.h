@@ -24,7 +24,7 @@
 #include "kernel.h"
 #include "../math/random.h"
 
-// uncomment to disable statistics
+// uncomment to enable statistics
 //#define ENABLE_STATS
 
 #ifdef ENABLE_STATS
@@ -108,10 +108,10 @@ struct CacheDimension {
 template<typename Kernel, typename Matrix, typename Strategy>
 class CachedKernelEvaluator {
 
-	fvalue *kernelValues;
+	vector<fvalue> kernelValues;
 	fvectorv kernelValuesView;
 
-	fvalue *alphas;
+	vector<fvalue> alphas;
 	fvectorv alphasView;
 	quantity svnumber;
 	quantity psvnumber;
@@ -126,8 +126,8 @@ class CachedKernelEvaluator {
 	fvalue *cache;
 
 	fvectorv *views;
-	sample_id *forwardOrder;
-	sample_id *backwardOrder;
+	vector<sample_id> forwardOrder;
+	vector<sample_id> backwardOrder;
 
 	EntryMapping *mappings;
 	CacheEntry *entries;
@@ -195,8 +195,8 @@ public:
 	RbfKernelEvaluator<Kernel, Matrix>* getEvaluator();
 	fvector* getAlphas();
 	fvector* getBuffer();
-	sample_id* getBackwardOrder();
-	sample_id* getForwardOrder();
+	vector<sample_id>& getBackwardOrder();
+	vector<sample_id>& getForwardOrder();
 
 	void structureCheck();
 	void reportStatistics();
@@ -223,16 +223,16 @@ CachedKernelEvaluator<Kernel, Matrix, Strategy>::CachedKernelEvaluator(
 
 	// initialize alphas and kernel values
 	svnumber = 1;
-	alphas = new fvalue[problemSize];
-	alphasView = fvectorv_array(alphas, svnumber);
-	kernelValues = new fvalue[problemSize];
-	kernelValuesView = fvectorv_array(kernelValues, svnumber);
+	alphas = vector<fvalue>(problemSize);
+	alphasView = fvectorv_array(alphas.data(), svnumber);
+	kernelValues = vector<fvalue>(problemSize);
+	kernelValuesView = fvectorv_array(kernelValues.data(), svnumber);
 
 	fbuffer = fvector_alloc(problemSize);
 	fbufferView = fvector_subv(fbuffer, 0, svnumber);
 
-	forwardOrder = new sample_id[problemSize];
-	backwardOrder = new sample_id[problemSize];
+	forwardOrder = vector<sample_id>(problemSize);
+	backwardOrder = vector<sample_id>(problemSize);
 	for (quantity i = 0; i < problemSize; i++) {
 		forwardOrder[i] = i;
 		backwardOrder[i] = i;
@@ -254,10 +254,6 @@ CachedKernelEvaluator<Kernel, Matrix, Strategy>::~CachedKernelEvaluator() {
 	delete [] views;
 	delete [] mappings;
 	delete [] entries;
-	delete [] alphas;
-	delete [] kernelValues;
-	delete [] forwardOrder;
-	delete [] backwardOrder;
 	fvector_free(fbuffer);
 }
 
@@ -672,8 +668,8 @@ void CachedKernelEvaluator<Kernel, Matrix, Strategy>::initialize() {
 	kernelValues[0] = evaluator->getKernelTau();
 	svnumber = 1;
 	psvnumber = 1;
-	alphasView = fvectorv_array(alphas, svnumber);
-	kernelValuesView = fvectorv_array(kernelValues, svnumber);
+	alphasView = fvectorv_array(alphas.data(), svnumber);
+	kernelValuesView = fvectorv_array(kernelValues.data(), svnumber);
 
 	// initialize buffer
 	fbufferView = fvector_subv(fbuffer, 0, svnumber);
@@ -742,7 +738,7 @@ void CachedKernelEvaluator<Kernel, Matrix, Strategy>::updateKernelValues(sample_
 
 	fvalue *uptr = uvector.data;
 	fvalue *vptr = vvector.data;
-	fvalue *kptr = kernelValues;
+	fvalue *kptr = kernelValues.data();
 	for (sample_id i = 0; i < svnumber; i++) {
 		*kptr++ += beta * (*vptr++ - *uptr++);
 	}
@@ -767,7 +763,7 @@ void CachedKernelEvaluator<Kernel, Matrix, Strategy>::performSvUpdate() {
 	fvalue maxKernel = -MAX_FVALUE;
 	sample_id maxIdx = INVALID_SAMPLE_ID;
 
-	fvalue *kptr = kernelValues;
+	fvalue *kptr = kernelValues.data();
 	for (sample_id i = 0; i < svnumber; i++) {
 		fvalue kernel = *kptr++;
 		if (kernel > maxKernel) {
@@ -790,7 +786,7 @@ template<typename Kernel, typename Matrix, typename Strategy>
 sample_id CachedKernelEvaluator<Kernel, Matrix, Strategy>::findMaxSVKernelVal(sample_id v) {
 	sample_id violator;
 	fvalue maxGoodness = -MAX_FVALUE;
-	fvalue *aptr = alphas;
+	fvalue *aptr = alphas.data();
 
 	fvalue vw = kernelValues[v];
 	fvalue av = alphas[v];
@@ -817,7 +813,7 @@ template<typename Kernel, typename Matrix, typename Strategy>
 sample_id CachedKernelEvaluator<Kernel, Matrix, Strategy>::findMinSVKernelVal() {
 	sample_id violator;
 	fvalue minKernel = MAX_FVALUE;
-	fvalue *kptr = kernelValues;
+	fvalue *kptr = kernelValues.data();
 	for (sample_id i = 0; i < svnumber; i++) {
 		fvalue kernel = *kptr++;
 		if (kernel < minKernel) {
@@ -872,12 +868,12 @@ inline fvector* CachedKernelEvaluator<Kernel, Matrix, Strategy>::getBuffer() {
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-sample_id* CachedKernelEvaluator<Kernel, Matrix, Strategy>::getBackwardOrder() {
+vector<sample_id>& CachedKernelEvaluator<Kernel, Matrix, Strategy>::getBackwardOrder() {
 	return backwardOrder;
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-sample_id* CachedKernelEvaluator<Kernel, Matrix, Strategy>::getForwardOrder() {
+vector<sample_id>& CachedKernelEvaluator<Kernel, Matrix, Strategy>::getForwardOrder() {
 	return forwardOrder;
 }
 

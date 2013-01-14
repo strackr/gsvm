@@ -253,7 +253,7 @@ void PairwiseSolver<Kernel, Matrix, Strategy>::train() {
 
 		fvalue bias = 0;
 		fvalue* cacheAlphas = this->cache->getAlphas()->data;
-		sample_id* cacheSamples = this->cache->getBackwardOrder();
+		vector<sample_id>& cacheSamples = this->cache->getBackwardOrder();
 		quantity svNumber  = this->cache->getSVNumber();
 		sample_id currentSv = 0;
 		for (quantity i = 0; i < svNumber; i++) {
@@ -272,7 +272,7 @@ void PairwiseSolver<Kernel, Matrix, Strategy>::train() {
 	}
 
 	id freeOffset = 0;
-	sample_id* mapping = this->cache->getForwardOrder();
+	vector<sample_id>& mapping = this->cache->getForwardOrder();
 	for (it = state.models.begin(); it != state.models.end(); it++) {
 		for (id i = 0; i < it->size; i++) {
 			id realOffset = mapping[it->samples[i]];
