@@ -36,11 +36,12 @@ class UniversalClassifier: public Classifier<Kernel, Matrix> {
 
 	quantity labelNumber;
 	quantity svNumber;
+	fvalue rho;
 
 public:
 	UniversalClassifier(RbfKernelEvaluator<Kernel, Matrix> *evaluator,
 			fvector *alphas, label_id *labels, fvector *kernelBuffer,
-			quantity labelNumber, quantity svNumber, bool useBias);
+			quantity labelNumber, quantity svNumber, fvalue rho, bool useBias);
 	virtual ~UniversalClassifier();
 
 	label_id classify(sample_id sample);
@@ -53,13 +54,14 @@ template<typename Kernel, typename Matrix>
 UniversalClassifier<Kernel, Matrix>::UniversalClassifier(
 		RbfKernelEvaluator<Kernel, Matrix> *evaluator,
 		fvector *alphas, label_id *labels, fvector *kernelBuffer,
-		quantity labelNumber, quantity svNumber, bool useBias) :
+		quantity labelNumber, quantity svNumber, fvalue rho, bool useBias) :
 		evaluator(evaluator),
 		alphas(alphas),
 		labels(labels),
 		kernelBuffer(kernelBuffer),
 		labelNumber(labelNumber),
-		svNumber(svNumber) {
+		svNumber(svNumber),
+		rho(rho) {
 	labelBuffer = fvector_alloc(labelNumber);
 
 	biasBuffer = fvector_alloc(labelNumber);
@@ -143,7 +145,7 @@ Classifier<Kernel, Matrix>* UniversalSolver<Kernel, Matrix, Strategy>::getClassi
 	buffer->size = this->cache->getSVNumber();
 	return new UniversalClassifier<Kernel, Matrix>(this->cache->getEvaluator(),
 			this->cache->getAlphas(), this->labels, buffer, this->labelNames.size(),
-			this->cache->getSVNumber(), this->params.useBias);
+			this->cache->getSVNumber(), this->cache->getWNorm(), this->params.useBias);
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>

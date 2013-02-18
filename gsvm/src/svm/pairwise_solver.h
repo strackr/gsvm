@@ -267,6 +267,7 @@ void PairwiseSolver<Kernel, Matrix, Strategy>::train() {
 				currentSv++;
 			}
 		}
+
 		it->bias = this->params.useBias ? bias : 0.0;
 		it->size = currentSv;
 	}

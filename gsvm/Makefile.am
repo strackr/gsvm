@@ -23,6 +23,7 @@ SOURCES = \
 		src/svm/universal_solver.h \
 		src/svm/stop.cc \
 		src/svm/stop.h \
+		src/svm/bias.h \
 		src/svm/strategy.h \
 		src/svm/validation.h \
 		src/svm/violation.h \

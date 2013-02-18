@@ -181,6 +181,7 @@ public:
 
 	void performUpdate(sample_id u, sample_id v);
 	fvalue getWNorm();
+	vector<fvalue>& getKernelValues();
 	void performSvUpdate();
 
 	void setSwapListener(SwapListener *listener);
@@ -754,6 +755,11 @@ void CachedKernelEvaluator<Kernel, Matrix, Strategy>::updateKernelValues(sample_
 template<typename Kernel, typename Matrix, typename Strategy>
 inline fvalue CachedKernelEvaluator<Kernel, Matrix, Strategy>::getWNorm() {
 	return w2;
+}
+
+template<typename Kernel, typename Matrix, typename Strategy>
+inline vector<fvalue>& CachedKernelEvaluator<Kernel, Matrix, Strategy>::getKernelValues() {
+	return kernelValues;
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
