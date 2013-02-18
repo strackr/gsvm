@@ -61,7 +61,7 @@ protected:
 
 public:
 	RbfKernelEvaluator(Matrix* samples, label_id* labels, quantity classNumber,
-			bool withBias, fvalue c, Kernel &params);
+			fvalue bias, fvalue c, Kernel &params);
 	~RbfKernelEvaluator();
 
 	fvalue evalInnerKernel(sample_id uid, sample_id vid);
@@ -85,15 +85,15 @@ public:
 template<class Kernel, class Matrix>
 RbfKernelEvaluator<Kernel, Matrix>::RbfKernelEvaluator(
 		Matrix* samples, label_id* labels, quantity classNumber,
-		bool withBias, fvalue c, Kernel &params) :
+		fvalue bias, fvalue c, Kernel &params) :
 		samples(samples),
 		labels(labels),
 		c(c),
+		bias(bias),
 		params(params),
 		eval(samples) {
 	yyNeg = -1.0 / (classNumber - 1);
 	d1dc = 1.0 / c;
-	bias = withBias ? 1.0 : 0.0;
 	tau = 1.0 + bias + 1.0 / c;
 }
 

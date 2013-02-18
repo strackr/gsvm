@@ -268,7 +268,7 @@ void PairwiseSolver<Kernel, Matrix, Strategy>::train() {
 			}
 		}
 
-		it->bias = this->params.useBias ? bias : 0.0;
+		it->bias = this->params.bias != NO ? bias : 0.0;
 		it->size = currentSv;
 	}
 
@@ -313,8 +313,9 @@ quantity PairwiseSolver<Kernel, Matrix, Strategy>::reorderSamples(
 template<typename Kernel, typename Matrix, typename Strategy>
 CachedKernelEvaluator<Kernel, Matrix, Strategy>* PairwiseSolver<Kernel, Matrix, Strategy>::buildCache(
 		fvalue c, Kernel &gparams) {
+	fvalue bias = (this->params.bias == NO) ? 0.0 : 1.0;
 	RbfKernelEvaluator<GaussKernel, Matrix> *rbf = new RbfKernelEvaluator<GaussKernel, Matrix>(
-			this->samples, this->labels, 2, this->params.useBias, c, gparams);
+			this->samples, this->labels, 2, bias, c, gparams);
 	return new CachedKernelEvaluator<GaussKernel, Matrix, Strategy>(
 			rbf, &this->strategy, this->size, this->params.cache.size, this->params.eta, NULL);
 }

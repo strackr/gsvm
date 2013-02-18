@@ -31,12 +31,18 @@
 
 #define DEFAULT_GENERATOR_BUCKET_NUMBER 1025
 
+enum BiasType {
+	NO,
+	THEORETIC,
+	AVERAGE
+};
+
 struct TrainParams {
 	fvalue epsilon;
 	fvalue eta;
 	quantity drawNumber;
 
-	bool useBias;
+	BiasType bias;
 
 	struct {
 		quantity size;

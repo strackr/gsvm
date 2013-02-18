@@ -64,11 +64,22 @@ Configuration ParametersParser::getConfiguration() {
 	fvalue eta = vars[PR_KEY_ETA].as<fvalue>();
 	quantity drawNumber = vars[PR_KEY_DRAW_NUM].as<int>();
 	quantity cacheSize = vars[PR_KEY_CACHE_SIZE].as<int>();
-	bool useBias = !vars.count(PR_KEY_WITHOUT_BIAS);
+	BiasType bias = THEORETIC;
+	string biasEvaluation = vars[PR_KEY_BIAS].as<string>();
+	if (BIAS_CALCULATION_NO == biasEvaluation) {
+		bias = NO;
+	} else if (BIAS_CALCULATION_THEORETIC == biasEvaluation) {
+		bias = THEORETIC;
+	} else if (BIAS_CALCULATION_AVERAGE == biasEvaluation) {
+		bias = AVERAGE;
+	} else {
+		throw invalid_configuration("invalid bias evaluation strategy: " + biasEvaluation);
+	}
+
 	TrainParams params;
 	params.epsilon = epsilon;
 	params.eta = eta;
-	params.useBias = useBias;
+	params.bias = bias;
 	params.drawNumber = drawNumber;
 	params.cache.size = cacheSize;
 	conf.trainingParams = params;

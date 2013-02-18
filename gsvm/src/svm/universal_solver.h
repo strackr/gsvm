@@ -143,9 +143,10 @@ template<typename Kernel, typename Matrix, typename Strategy>
 Classifier<Kernel, Matrix>* UniversalSolver<Kernel, Matrix, Strategy>::getClassifier() {
 	fvector *buffer = this->cache->getBuffer();
 	buffer->size = this->cache->getSVNumber();
+	fvalue bias = (this->params.bias == NO) ? 0.0 : 1.0;
 	return new UniversalClassifier<Kernel, Matrix>(this->cache->getEvaluator(),
 			this->cache->getAlphas(), this->labels, buffer, this->labelNames.size(),
-			this->cache->getSVNumber(), this->cache->getWNorm(), this->params.useBias);
+			this->cache->getSVNumber(), this->cache->getWNorm(), bias);
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>

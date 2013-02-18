@@ -60,8 +60,8 @@ int main(int argc, char *argv[]) {
 		(PR_EPSILON, value<string>()->default_value(EPSILON_DEFAULT),
 				"epsilon value")
 		(PR_ETA, value<fvalue>()->default_value(DEFAULT_ETA), "eta value")
-		(PR_WITH_BIAS, "perform SVM training with bias")
-		(PR_WITHOUT_BIAS, "perform SVM training without bias")
+		(PR_BIAS_CALCULATION, value<string>()->default_value(BIAS_CALCULATION_THEORETIC),
+				"bias evaluation strategy (theoretic, average, nobias)")
 		(PR_DRAW_NUM, value<int>()->default_value(600), "draw number")
 		(PR_MULTICLASS, value<string>()->default_value(MULTICLASS_ALL_AT_ONCE),
 				"multiclass training approach (allatonce or pairwise)")
