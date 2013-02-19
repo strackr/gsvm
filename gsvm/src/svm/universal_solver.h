@@ -136,8 +136,8 @@ Classifier<Kernel, Matrix>* UniversalSolver<Kernel, Matrix, Strategy>::getClassi
 	RbfKernelEvaluator<Kernel, Matrix>* evaluator = this->cache->getEvaluator();
 	scoped_ptr<BiasEvaluationStrategy<Kernel, Matrix> > strategy(
 			factory.createEvaluator(this->params.bias, evaluator));
-	// TODO avoid copying labels
 	quantity svNumber = this->cache->getSVNumber();
+	// TODO avoid copying labels
 	vector<label_id> labels(this->labels, this->labels + svNumber);
 	vector<fvalue> bias = strategy->getBias(labels, this->cache->getAlphas(),
 			this->labelNames.size(), svNumber,

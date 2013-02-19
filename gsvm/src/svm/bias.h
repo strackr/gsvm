@@ -45,9 +45,12 @@ BiasEvaluationStrategy<Kernel, Matrix>::~BiasEvaluationStrategy() {
 }
 
 
-
+/**
+ * Bias evaluation strategy that uses theoretic dual space formula for bias
+ * calculation.
+ */
 template<typename Kernel, typename Matrix>
-class TeoreticBiasStrategy: public BiasEvaluationStrategy<Kernel, Matrix> {
+class TheoreticBiasStrategy: public BiasEvaluationStrategy<Kernel, Matrix> {
 
 public:
 	virtual vector<fvalue> getBias(vector<label_id>& labels, vector<fvalue>& alphas,
@@ -55,16 +58,16 @@ public:
 	virtual fvalue getBinaryBias(vector<label_id>& labels, vector<fvalue>& alphas,
 			quantity sampleNumber, label_id label, fvalue rho, fvalue c);
 
-	virtual ~TeoreticBiasStrategy();
+	virtual ~TheoreticBiasStrategy();
 
 };
 
 template<typename Kernel, typename Matrix>
-TeoreticBiasStrategy<Kernel, Matrix>::~TeoreticBiasStrategy() {
+TheoreticBiasStrategy<Kernel, Matrix>::~TheoreticBiasStrategy() {
 }
 
 template<typename Kernel, typename Matrix>
-vector<fvalue> TeoreticBiasStrategy<Kernel, Matrix>::getBias(
+vector<fvalue> TheoreticBiasStrategy<Kernel, Matrix>::getBias(
 		vector<label_id>& labels, vector<fvalue>& alphas,
 		quantity labelNumber, quantity sampleNumber, fvalue rho, fvalue c) {
 	vector<fvalue> bias(labelNumber, YY_NEG(labelNumber));
@@ -78,11 +81,11 @@ vector<fvalue> TeoreticBiasStrategy<Kernel, Matrix>::getBias(
 }
 
 template<typename Kernel, typename Matrix>
-fvalue TeoreticBiasStrategy<Kernel, Matrix>::getBinaryBias(
+fvalue TheoreticBiasStrategy<Kernel, Matrix>::getBinaryBias(
 		vector<label_id>& labels, vector<fvalue>& alphas,
 		quantity sampleNumber, label_id label, fvalue rho, fvalue c) {
 	fvalue bias = 0;
-	fvalue mult[] = {-1.0, 1.0};
+	fvalue mult[] = {YY_NEG(2), YY_POS};
 	for (sample_id v = 0; v < sampleNumber; v++) {
 		bias += alphas[v] * mult[labels[v] == label];
 	}
@@ -90,6 +93,10 @@ fvalue TeoreticBiasStrategy<Kernel, Matrix>::getBinaryBias(
 }
 
 
+/**
+ * Bias evaluation strategy that based on KKT conditions calculates the value
+ * of the bias for every support vector and then averages the results.
+ */
 template<typename Kernel, typename Matrix>
 class AverageBiasStrategy: public BiasEvaluationStrategy<Kernel, Matrix> {
 
@@ -157,7 +164,7 @@ fvalue AverageBiasStrategy<Kernel, Matrix>::getBinaryBias(
 	fvalue bias = 0.0;
 	quantity count = 0;
 
-	fvalue mult[] = {-1.0, 1.0};
+	fvalue mult[] = {YY_NEG(2), YY_POS};
 	fvector* kernelBuffer = fvector_alloc(sampleNumber);
 
 	for (id v = 0; v < sampleNumber; v++) {
@@ -181,6 +188,11 @@ fvalue AverageBiasStrategy<Kernel, Matrix>::getBinaryBias(
 	return bias / count;
 }
 
+
+/**
+ * Bias evaluation strategy that always returns 0. Used in SVM training
+ * without bias.
+ */
 template<typename Kernel, typename Matrix>
 class NoBiasStrategy: public BiasEvaluationStrategy<Kernel, Matrix> {
 
@@ -212,6 +224,10 @@ fvalue NoBiasStrategy<Kernel, Matrix>::getBinaryBias(
 	return 0.0;
 }
 
+
+/**
+ * Factory class for bias evaluators.
+ */
 template<typename Kernel, typename Matrix>
 class BiasEvaluatorFactory {
 
@@ -226,7 +242,7 @@ BiasEvaluationStrategy<Kernel, Matrix>* BiasEvaluatorFactory<Kernel, Matrix>::cr
 		BiasType type, RbfKernelEvaluator<Kernel, Matrix>* evaluator) {
 	BiasEvaluationStrategy<Kernel, Matrix>* eval = NULL;
 	if (type == THEORETIC) {
-		eval = new TeoreticBiasStrategy<Kernel, Matrix>();
+		eval = new TheoreticBiasStrategy<Kernel, Matrix>();
 	} else if (type == AVERAGE) {
 		eval = new AverageBiasStrategy<Kernel, Matrix>(evaluator);
 	} else {
