@@ -33,6 +33,8 @@ class BiasEvaluationStrategy {
 public:
 	virtual vector<fvalue> getBias(vector<label_id>& labels, vector<fvalue>& alphas,
 			quantity labelNumber, quantity sampleNumber, fvalue rho, fvalue c) = 0;
+	virtual fvalue getBinaryBias(vector<label_id>& labels, vector<fvalue>& alphas,
+			quantity sampleNumber, label_id label, fvalue rho, fvalue c) = 0;
 
 	virtual ~BiasEvaluationStrategy();
 
@@ -50,6 +52,8 @@ class TeoreticBiasStrategy: public BiasEvaluationStrategy<Kernel, Matrix> {
 public:
 	virtual vector<fvalue> getBias(vector<label_id>& labels, vector<fvalue>& alphas,
 			quantity labelNumber, quantity sampleNumber, fvalue rho, fvalue c);
+	virtual fvalue getBinaryBias(vector<label_id>& labels, vector<fvalue>& alphas,
+			quantity sampleNumber, label_id label, fvalue rho, fvalue c);
 
 	virtual ~TeoreticBiasStrategy();
 
@@ -73,6 +77,17 @@ vector<fvalue> TeoreticBiasStrategy<Kernel, Matrix>::getBias(
 	return bias;
 }
 
+template<typename Kernel, typename Matrix>
+fvalue TeoreticBiasStrategy<Kernel, Matrix>::getBinaryBias(
+		vector<label_id>& labels, vector<fvalue>& alphas,
+		quantity sampleNumber, label_id label, fvalue rho, fvalue c) {
+	fvalue bias = 0;
+	fvalue mult[] = {-1.0, 1.0};
+	for (sample_id v = 0; v < sampleNumber; v++) {
+		bias += alphas[v] * mult[labels[v] == label];
+	}
+	return bias;
+}
 
 
 template<typename Kernel, typename Matrix>
@@ -85,6 +100,8 @@ public:
 
 	virtual vector<fvalue> getBias(vector<label_id>& labels, vector<fvalue>& alphas,
 			quantity labelNumber, quantity sampleNumber, fvalue rho, fvalue c);
+	virtual fvalue getBinaryBias(vector<label_id>& labels, vector<fvalue>& alphas,
+			quantity sampleNumber, label_id label, fvalue rho, fvalue c);
 
 	virtual ~AverageBiasStrategy();
 
@@ -110,18 +127,20 @@ vector<fvalue> AverageBiasStrategy<Kernel, Matrix>::getBias(
 	fvector* kernelBuffer = fvector_alloc(sampleNumber);
 
 	for (id v = 0; v < sampleNumber; v++) {
-		label_id label = labels[v];
-		fvalue value = rho - alphas[v] / c;
+		if (alphas[v] > 0.0) {
+			label_id label = labels[v];
+			fvalue value = rho - alphas[v] / c;
 
-		// TODO use cache instead
-		evaluator->evalInnerKernel(v, 0, sampleNumber, kernelBuffer);
-		fvalue* kernelValues = kernelBuffer->data;
-		for (id u = 0; u < sampleNumber; u++) {
-			fvalue yy = (labels[u] == labels[v]) ? YY_POS : YY_NEG(labelNumber);
-			value -= yy * alphas[u] * kernelValues[u];
+			// TODO use cache instead
+			evaluator->evalInnerKernel(v, 0, sampleNumber, kernelBuffer);
+			fvalue* kernelValues = kernelBuffer->data;
+			for (id u = 0; u < sampleNumber; u++) {
+				fvalue yy = (labels[u] == labels[v]) ? YY_POS : YY_NEG(labelNumber);
+				value -= yy * alphas[u] * kernelValues[u];
+			}
+			bias[label] += value;
+			count[label]++;
 		}
-		bias[label] += value;
-		count[label]++;
 	}
 	for (label_id l = 0; l < labelNumber; l++) {
 		bias[l] /= count[l];
@@ -131,6 +150,36 @@ vector<fvalue> AverageBiasStrategy<Kernel, Matrix>::getBias(
 	return bias;
 }
 
+template<typename Kernel, typename Matrix>
+fvalue AverageBiasStrategy<Kernel, Matrix>::getBinaryBias(
+		vector<label_id>& labels, vector<fvalue>& alphas,
+		quantity sampleNumber, label_id label, fvalue rho, fvalue c) {
+	fvalue bias = 0.0;
+	quantity count = 0;
+
+	fvalue mult[] = {-1.0, 1.0};
+	fvector* kernelBuffer = fvector_alloc(sampleNumber);
+
+	for (id v = 0; v < sampleNumber; v++) {
+		if (alphas[v] > 0.0) {
+			fvalue value = rho - alphas[v] / c;
+
+			// TODO use cache instead
+			evaluator->evalInnerKernel(v, 0, sampleNumber, kernelBuffer);
+			fvalue* kernelValues = kernelBuffer->data;
+			for (id u = 0; u < sampleNumber; u++) {
+				fvalue yyuv = mult[labels[v] == labels[u]];
+				value -= yyuv * alphas[u] * kernelValues[u];
+			}
+			fvalue yy = mult[label == labels[v]];
+			bias += yy * value;
+			count++;
+		}
+	}
+
+	fvector_free(kernelBuffer);
+	return bias / count;
+}
 
 template<typename Kernel, typename Matrix>
 class NoBiasStrategy: public BiasEvaluationStrategy<Kernel, Matrix> {
@@ -138,6 +187,8 @@ class NoBiasStrategy: public BiasEvaluationStrategy<Kernel, Matrix> {
 public:
 	virtual vector<fvalue> getBias(vector<label_id>& labels, vector<fvalue>& alphas,
 			quantity labelNumber, quantity sampleNumber, fvalue rho, fvalue c);
+	virtual fvalue getBinaryBias(vector<label_id>& labels, vector<fvalue>& alphas,
+			quantity sampleNumber, label_id label, fvalue rho, fvalue c);
 
 	virtual ~NoBiasStrategy();
 
@@ -154,6 +205,12 @@ vector<fvalue> NoBiasStrategy<Kernel, Matrix>::getBias(
 	return vector<fvalue>(labelNumber, 0.0);
 }
 
+template<typename Kernel, typename Matrix>
+fvalue NoBiasStrategy<Kernel, Matrix>::getBinaryBias(
+		vector<label_id>& labels, vector<fvalue>& alphas,
+		quantity sampleNumber, label_id label, fvalue rho, fvalue c) {
+	return 0.0;
+}
 
 template<typename Kernel, typename Matrix>
 class BiasEvaluatorFactory {

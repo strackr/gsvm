@@ -272,10 +272,8 @@ void PairwiseSolver<Kernel, Matrix, Strategy>::train() {
 
 		// TODO avoid copying
 		vector<label_id> labels(this->labels, this->labels + svNumber);
-		vector<fvalue> bias = strategy->getBias(labels, this->cache->getAlphas(),
-				this->labelNames.size(), svNumber,
-				this->cache->getWNorm(), evaluator->getC());
-		it->bias = (bias[0] - bias[1]) / 2;
+		it->bias = strategy->getBinaryBias(labels, this->cache->getAlphas(),
+				svNumber, trainPair.first, this->cache->getWNorm(), evaluator->getC());
 		it->size = currentSv;
 	}
 
