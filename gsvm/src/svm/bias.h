@@ -20,6 +20,7 @@
 #define BIAS_H_
 
 #include "kernel.h"
+#include "params.h"
 #include "../math/numeric.h"
 
 #define DEFAULT_EPSILON 0.001
@@ -79,11 +80,8 @@ class AverageBiasStrategy: public BiasEvaluationStrategy<Kernel, Matrix> {
 
 	RbfKernelEvaluator<Kernel, Matrix> *evaluator;
 
-	fvector *kernelBuffer;
-
 public:
-	AverageBiasStrategy(RbfKernelEvaluator<Kernel, Matrix> *evaluator,
-			fvector *kernelBuffer);
+	AverageBiasStrategy(RbfKernelEvaluator<Kernel, Matrix> *evaluator);
 
 	virtual vector<fvalue> getBias(vector<label_id>& labels, vector<fvalue>& alphas,
 			quantity labelNumber, quantity sampleNumber, fvalue rho, fvalue c);
@@ -94,9 +92,8 @@ public:
 
 template<typename Kernel, typename Matrix>
 AverageBiasStrategy<Kernel, Matrix>::AverageBiasStrategy(
-		RbfKernelEvaluator<Kernel, Matrix>* evaluator, fvector* kernelBuffer) :
-		evaluator(evaluator),
-		kernelBuffer(kernelBuffer) {
+		RbfKernelEvaluator<Kernel, Matrix>* evaluator) :
+		evaluator(evaluator) {
 }
 
 template<typename Kernel, typename Matrix>
@@ -109,6 +106,8 @@ vector<fvalue> AverageBiasStrategy<Kernel, Matrix>::getBias(
 		quantity labelNumber, quantity sampleNumber, fvalue rho, fvalue c) {
 	vector<fvalue> bias(labelNumber, 0.0);
 	vector<quantity> count(labelNumber, 0);
+
+	fvector* kernelBuffer = fvector_alloc(sampleNumber);
 
 	for (id v = 0; v < sampleNumber; v++) {
 		label_id label = labels[v];
@@ -127,6 +126,8 @@ vector<fvalue> AverageBiasStrategy<Kernel, Matrix>::getBias(
 	for (label_id l = 0; l < labelNumber; l++) {
 		bias[l] /= count[l];
 	}
+
+	fvector_free(kernelBuffer);
 	return bias;
 }
 
@@ -151,6 +152,30 @@ vector<fvalue> NoBiasStrategy<Kernel, Matrix>::getBias(
 		vector<label_id>& labels, vector<fvalue>& alphas,
 		quantity labelNumber, quantity sampleNumber, fvalue rho, fvalue c) {
 	return vector<fvalue>(labelNumber, 0.0);
+}
+
+
+template<typename Kernel, typename Matrix>
+class BiasEvaluatorFactory {
+
+public:
+	BiasEvaluationStrategy<Kernel, Matrix>* createEvaluator(BiasType type,
+			RbfKernelEvaluator<Kernel, Matrix>* evaluator);
+
+};
+
+template<typename Kernel, typename Matrix>
+BiasEvaluationStrategy<Kernel, Matrix>* BiasEvaluatorFactory<Kernel, Matrix>::createEvaluator(
+		BiasType type, RbfKernelEvaluator<Kernel, Matrix>* evaluator) {
+	BiasEvaluationStrategy<Kernel, Matrix>* eval = NULL;
+	if (type == THEORETIC) {
+		eval = new TeoreticBiasStrategy<Kernel, Matrix>();
+	} else if (type == AVERAGE) {
+		eval = new AverageBiasStrategy<Kernel, Matrix>(evaluator);
+	} else {
+		eval = new NoBiasStrategy<Kernel, Matrix>();
+	}
+	return eval;
 }
 
 #endif

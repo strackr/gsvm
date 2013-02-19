@@ -194,7 +194,8 @@ public:
 	Kernel getParams();
 	fvalue getC();
 	RbfKernelEvaluator<Kernel, Matrix>* getEvaluator();
-	fvector* getAlphas();
+	vector<fvalue>& getAlphas();
+	fvector* getAlphasView();
 	fvector* getBuffer();
 	vector<sample_id>& getBackwardOrder();
 	vector<sample_id>& getForwardOrder();
@@ -864,7 +865,12 @@ inline RbfKernelEvaluator<Kernel, Matrix>* CachedKernelEvaluator<Kernel, Matrix,
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>
-inline fvector* CachedKernelEvaluator<Kernel, Matrix, Strategy>::getAlphas() {
+inline vector<fvalue>& CachedKernelEvaluator<Kernel, Matrix, Strategy>::getAlphas() {
+	return alphas;
+}
+
+template<typename Kernel, typename Matrix, typename Strategy>
+inline fvector* CachedKernelEvaluator<Kernel, Matrix, Strategy>::getAlphasView() {
 	return &alphasView.vector;
 }
 

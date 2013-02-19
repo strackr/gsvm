@@ -36,12 +36,11 @@ class UniversalClassifier: public Classifier<Kernel, Matrix> {
 
 	quantity labelNumber;
 	quantity svNumber;
-	fvalue rho;
 
 public:
 	UniversalClassifier(RbfKernelEvaluator<Kernel, Matrix> *evaluator,
 			fvector *alphas, label_id *labels, fvector *kernelBuffer,
-			quantity labelNumber, quantity svNumber, fvalue rho, bool useBias);
+			quantity labelNumber, quantity svNumber, vector<fvalue>& bias);
 	virtual ~UniversalClassifier();
 
 	label_id classify(sample_id sample);
@@ -54,29 +53,18 @@ template<typename Kernel, typename Matrix>
 UniversalClassifier<Kernel, Matrix>::UniversalClassifier(
 		RbfKernelEvaluator<Kernel, Matrix> *evaluator,
 		fvector *alphas, label_id *labels, fvector *kernelBuffer,
-		quantity labelNumber, quantity svNumber, fvalue rho, bool useBias) :
+		quantity labelNumber, quantity svNumber, vector<fvalue>& bias) :
 		evaluator(evaluator),
 		alphas(alphas),
 		labels(labels),
 		kernelBuffer(kernelBuffer),
 		labelNumber(labelNumber),
-		svNumber(svNumber),
-		rho(rho) {
+		svNumber(svNumber) {
 	labelBuffer = fvector_alloc(labelNumber);
 
 	biasBuffer = fvector_alloc(labelNumber);
-	if (useBias) {
-		fvalue yyNeg = YY_NEG(labelNumber);
-		fvector_set_all(biasBuffer, yyNeg);
-		fvalue *aptr = alphas->data;
-		fvalue *bptr = biasBuffer->data;
-		label_id *lptr = labels;
-		fvalue yy = -yyNeg + YY_POS;
-		for (sample_id svi = 0; svi < svNumber; svi++) {
-			label_id svl = lptr[svi];
-			bptr[svl] += yy * aptr[svi];
-		}
-	}
+	fvectorv biasView = fvectorv_array(bias.data(), labelNumber);
+	fvector_cpy(biasBuffer, &biasView.vector);
 }
 
 template<typename Kernel, typename Matrix>
@@ -143,10 +131,21 @@ template<typename Kernel, typename Matrix, typename Strategy>
 Classifier<Kernel, Matrix>* UniversalSolver<Kernel, Matrix, Strategy>::getClassifier() {
 	fvector *buffer = this->cache->getBuffer();
 	buffer->size = this->cache->getSVNumber();
-	fvalue bias = (this->params.bias == NO) ? 0.0 : 1.0;
-	return new UniversalClassifier<Kernel, Matrix>(this->cache->getEvaluator(),
-			this->cache->getAlphas(), this->labels, buffer, this->labelNames.size(),
-			this->cache->getSVNumber(), this->cache->getWNorm(), bias);
+
+	BiasEvaluatorFactory<Kernel, Matrix> factory;
+	RbfKernelEvaluator<Kernel, Matrix>* evaluator = this->cache->getEvaluator();
+	scoped_ptr<BiasEvaluationStrategy<Kernel, Matrix> > strategy(
+			factory.createEvaluator(this->params.bias, evaluator));
+	// TODO avoid copying labels
+	quantity svNumber = this->cache->getSVNumber();
+	vector<label_id> labels(this->labels, this->labels + svNumber);
+	vector<fvalue> bias = strategy->getBias(labels, this->cache->getAlphas(),
+			this->labelNames.size(), svNumber,
+			this->cache->getWNorm(), evaluator->getC());
+
+	return new UniversalClassifier<Kernel, Matrix>(evaluator,
+			this->cache->getAlphasView(), this->labels, buffer, this->labelNames.size(),
+			svNumber, bias);
 }
 
 template<typename Kernel, typename Matrix, typename Strategy>

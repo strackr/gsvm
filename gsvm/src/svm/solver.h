@@ -25,6 +25,8 @@
 #include <map>
 #include <vector>
 
+#include <boost/smart_ptr.hpp>
+
 #include "kernel.h"
 #include "classify.h"
 #include "cache.h"
@@ -40,7 +42,7 @@
 #define CACHE_USAGE_RATIO 0.1
 
 using namespace std;
-
+using boost::scoped_ptr;
 
 template<typename Kernel, typename Matrix>
 class Solver {

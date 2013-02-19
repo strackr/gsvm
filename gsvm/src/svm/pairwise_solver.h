@@ -242,6 +242,11 @@ Classifier<Kernel, Matrix>* PairwiseSolver<Kernel, Matrix, Strategy>::getClassif
 
 template<typename Kernel, typename Matrix, typename Strategy>
 void PairwiseSolver<Kernel, Matrix, Strategy>::train() {
+	BiasEvaluatorFactory<Kernel, Matrix> factory;
+	RbfKernelEvaluator<Kernel, Matrix>* evaluator = this->cache->getEvaluator();
+	scoped_ptr<BiasEvaluationStrategy<Kernel, Matrix> > strategy(
+			factory.createEvaluator(this->params.bias, evaluator));
+
 	quantity totalSize = this->currentSize;
 	vector<PairwiseTrainingResult>::iterator it;
 	for (it = state.models.begin(); it != state.models.end(); it++) {
@@ -251,8 +256,7 @@ void PairwiseSolver<Kernel, Matrix, Strategy>::train() {
 		this->reset();
 		this->trainForCache(this->cache);
 
-		fvalue bias = 0;
-		fvalue* cacheAlphas = this->cache->getAlphas()->data;
+		vector<fvalue>& cacheAlphas = this->cache->getAlphas();
 		vector<sample_id>& cacheSamples = this->cache->getBackwardOrder();
 		quantity svNumber  = this->cache->getSVNumber();
 		sample_id currentSv = 0;
@@ -260,15 +264,18 @@ void PairwiseSolver<Kernel, Matrix, Strategy>::train() {
 			fvalue alpha = cacheAlphas[i];
 			if (alpha != 0.0) {
 				fvalue yy = this->labels[i] == trainPair.first ? 1.0 : -1.0;
-				fvalue yalpha = yy * alpha;
-				it->yalphas[currentSv] = yalpha;
+				it->yalphas[currentSv] = yy * alpha;
 				it->samples[currentSv] = cacheSamples[i];
-				bias += yalpha;
 				currentSv++;
 			}
 		}
 
-		it->bias = this->params.bias != NO ? bias : 0.0;
+		// TODO avoid copying
+		vector<label_id> labels(this->labels, this->labels + svNumber);
+		vector<fvalue> bias = strategy->getBias(labels, this->cache->getAlphas(),
+				this->labelNames.size(), svNumber,
+				this->cache->getWNorm(), evaluator->getC());
+		it->bias = (bias[0] - bias[1]) / 2;
 		it->size = currentSv;
 	}
 
