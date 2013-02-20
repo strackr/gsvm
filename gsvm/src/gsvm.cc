@@ -72,7 +72,9 @@ int main(int argc, char *argv[]) {
 		(PR_STOP_CRIT, value<string>()->default_value(STOP_CRIT_ADJMN),
 				"stopping criterion (adjmn, mn or meb)")
 		(PR_OPTIMIZATION, value<string>()->default_value(OPTIMIZATION_MDM),
-				"optimization strategy (mdm or imdm)")
+				"optimization strategy (mdm, imdm, gmdm)")
+		(PR_GMDM_K, value<fvalue>()->default_value(0.5),
+				"gmdm optimization parameter")
 		(PR_ID_RANDOMIZER, value<string>()->default_value(ID_RANDOMIZER_FAIR),
 				"id generator (simple, fair or determ)")
 		(PR_CACHE_SIZE, value<int>()->default_value(DEFAULT_CACHE_SIZE),

@@ -55,6 +55,7 @@ using namespace boost::program_options;
 #define PR_MULTICLASS "multiclass,u"
 #define PR_CACHE_SIZE "cache-size,S"
 #define PR_BIAS_CALCULATION "bias,b"
+#define PR_GMDM_K "gmdm-k,k"
 
 #define PR_KEY_HELP "help"
 #define PR_KEY_C_LOW "c-low"
@@ -76,6 +77,7 @@ using namespace boost::program_options;
 #define PR_KEY_MULTICLASS "multiclass"
 #define PR_KEY_CACHE_SIZE "cache-size"
 #define PR_KEY_BIAS "bias"
+#define PR_KEY_GMDM_K "gmdm-k"
 
 #define SEL_TYPE_GRID "grid"
 #define SEL_TYPE_PATTERN "pattern"
@@ -91,7 +93,7 @@ using namespace boost::program_options;
 
 #define OPTIMIZATION_MDM "mdm"
 #define OPTIMIZATION_IMDM "imdm"
-#define OPTIMIZATION_GMDM "flex-imdm"
+#define OPTIMIZATION_GMDM "gmdm"
 
 #define ID_RANDOMIZER_PLAIN "simple"
 #define ID_RANDOMIZER_FAIR "fair"

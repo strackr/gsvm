@@ -75,6 +75,7 @@ Configuration ParametersParser::getConfiguration() {
 	} else {
 		throw invalid_configuration("invalid bias evaluation strategy: " + biasEvaluation);
 	}
+	fvalue k = vars[PR_KEY_GMDM_K].as<fvalue>();
 
 	TrainParams params;
 	params.epsilon = epsilon;
@@ -82,6 +83,7 @@ Configuration ParametersParser::getConfiguration() {
 	params.bias = bias;
 	params.drawNumber = drawNumber;
 	params.cache.size = cacheSize;
+	params.stopping.k = k;
 	conf.trainingParams = params;
 
 	string stopStr = vars[PR_KEY_STOP_CRIT].as<string>();
