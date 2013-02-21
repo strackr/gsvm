@@ -54,7 +54,7 @@
 
 using namespace std;
 
-#define pow(x, n) gsl_pow_int((x), (n))
+#define pown(x, n) gsl_pow_int((x), (n))
 #define pow2(x) gsl_pow_2((x))
 
 #define log(x) gsl_sf_log((x))

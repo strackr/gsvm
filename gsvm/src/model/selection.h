@@ -97,9 +97,9 @@ ModelSelectionResults GridGaussianModelSelector<Matrix, Strategy>::selectParamet
 	results.bestResult.accuracy = 0.0;
 
 	for (quantity cIter = 0; cIter < range.cResolution; cIter++) {
-		fvalue c = range.cLow * pow(cRatio, cIter);
+		fvalue c = range.cLow * pown(cRatio, cIter);
 		for (quantity gammaIter = 0; gammaIter < range.gammaResolution; gammaIter++) {
-			fvalue gamma = range.gammaLow * pow(gammaRatio, gammaIter);
+			fvalue gamma = range.gammaLow * pown(gammaRatio, gammaIter);
 
 			TestingResult result = validate(solver, c, gamma);
 
@@ -317,8 +317,8 @@ ModelSelectionResults PatternGaussianModelSelector<Matrix, Strategy>::selectPara
 					TestingResult result;
 
 					if (results.find(current) == results.end()) {
-						fvalue c = range.cLow * pow(cRatio, current.c);
-						fvalue gamma = range.gammaLow * pow(gammaRatio, current.gamma);
+						fvalue c = range.cLow * pown(cRatio, current.c);
+						fvalue gamma = range.gammaLow * pown(gammaRatio, current.gamma);
 
 						result = this->validate(solver, c, gamma);
 						registerResult(result, current.c, current.gamma);
@@ -335,8 +335,8 @@ ModelSelectionResults PatternGaussianModelSelector<Matrix, Strategy>::selectPara
 
 			if (bestAccuracy > globalRes.bestResult.accuracy) {
 				globalRes.bestResult.accuracy = bestAccuracy;
-				globalRes.c = range.cLow * pow(cRatio, bestPosition.c);
-				globalRes.gamma = range.gammaLow * pow(gammaRatio, bestPosition.gamma);
+				globalRes.c = range.cLow * pown(cRatio, bestPosition.c);
+				globalRes.gamma = range.gammaLow * pown(gammaRatio, bestPosition.gamma);
 			}
 
 			if (cOffset == bestPosition.c && gammaOffset == bestPosition.gamma) {
